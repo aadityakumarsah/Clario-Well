@@ -223,6 +223,9 @@ export default function BreatheSession() {
     a.play().catch(() => {});
   };
 
+  // 1-frame silent WAV — played synchronously on tap to unlock iOS audio
+  const SILENCE = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA==";
+
   const toggleVoice = async () => {
     if (voiceOn) {
       guideAudioRef.current?.pause();
@@ -230,23 +233,23 @@ export default function BreatheSession() {
       return;
     }
 
-    // Create & unlock Audio element inside user gesture (required by iOS)
+    // Create element and play silence SYNCHRONOUSLY inside the tap —
+    // this is the only way iOS grants audio permission for future plays.
     if (!guideAudioRef.current) {
-      const a = new Audio();
-      a.volume = 0.9;
-      guideAudioRef.current = a;
+      guideAudioRef.current = new Audio();
+      guideAudioRef.current.volume = 0.9;
     }
+    guideAudioRef.current.src = SILENCE;
+    guideAudioRef.current.play().catch(() => {});
 
+    // Now fetch TTS clips asynchronously (element already unlocked above)
     setVoiceLoading(true);
     await fetchVoiceGuide();
     setVoiceLoading(false);
     setVoiceOn(true);
 
-    // Play current phase immediately (still within user gesture callstack on most browsers)
-    if (running) {
-      const text = GUIDE_PHRASES[currentPhase.name];
-      playGuidePhrase(text);
-    }
+    // Play current phase right away
+    if (running) playGuidePhrase(GUIDE_PHRASES[currentPhase.name]);
   };
 
   // Play guide clip on each phase change (timer-driven — Audio already unlocked)
