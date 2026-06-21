@@ -125,8 +125,8 @@ const Settings = () => {
 
       <Navbar />
 
-      <div className="pt-28 pb-24 md:pb-16 px-6">
-        <div className="max-w-3xl mx-auto">
+      <div className="pt-28 pb-16 px-6">
+        <div className="max-w-2xl mx-auto">
           <motion.div
             initial="hidden"
             animate="visible"

@@ -92,7 +92,7 @@ export default function DailyCheck() {
       </div>
 
       {/* ── Content section ──────────────────────────────────────────── */}
-      <div className="flex-1 px-5 pb-24 md:pb-14 max-w-5xl w-full mx-auto -mt-6">
+      <div className="flex-1 px-5 pb-12 max-w-2xl w-full mx-auto -mt-6">
 
         {/* Header */}
         <motion.div
@@ -130,7 +130,7 @@ export default function DailyCheck() {
           initial="hidden"
           animate="visible"
           variants={stagger}
-          className="grid grid-cols-1 md:grid-cols-3 gap-3"
+          className="flex flex-col gap-3"
         >
           {STEPS.map((step) => {
             const Icon = step.icon;

@@ -117,7 +117,7 @@ const Journal = () => {
 
       <Navbar />
 
-      <div className="pt-28 pb-24 md:pb-16 px-6">
+      <div className="pt-28 pb-16 px-6">
         <div className="max-w-6xl mx-auto">
           <motion.div
             initial="hidden"

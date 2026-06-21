@@ -44,7 +44,7 @@ export default function Relief() {
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#0F0E0C" }}>
-      <div className="max-w-4xl mx-auto px-5 pt-14 md:pt-28 pb-24 md:pb-16">
+      <div className="max-w-xl mx-auto px-5 pt-14 pb-24">
         <motion.div
           initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
@@ -67,7 +67,7 @@ export default function Relief() {
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="flex flex-col gap-4">
           {CARDS.map((card, i) => {
             const Icon = card.icon;
             return (
