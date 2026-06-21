@@ -22,11 +22,11 @@ PRICE_IDS: dict[str, str] = {
 }
 
 
-def _stripe_client() -> stripe.Stripe:
+def _stripe_client() -> stripe.StripeClient:
     secret_key = os.getenv("STRIPE_SECRET_KEY", "")
     if not secret_key:
         raise HTTPException(status_code=500, detail="STRIPE_SECRET_KEY not configured")
-    return stripe.Stripe(secret_key)
+    return stripe.StripeClient(secret_key)
 
 
 # ── Schemas ───────────────────────────────────────────────────────────────────
@@ -86,7 +86,7 @@ def create_checkout_session(
 
     try:
         session = client.checkout.sessions.create(**session_params)
-    except stripe.StripeError as e:
+    except stripe.StripeClientError as e:
         logger.error("Stripe error creating checkout session: {}", e)
         raise HTTPException(status_code=502, detail=str(e))
 
@@ -147,7 +147,7 @@ def _handle_checkout_completed(session: dict) -> None:
         secret_key = os.getenv("STRIPE_SECRET_KEY", "")
         if secret_key:
             try:
-                client = stripe.Stripe(secret_key)
+                client = stripe.StripeClient(secret_key)
                 sub = client.subscriptions.retrieve(subscription_id)
                 status = sub.status
                 current_period_end = sub.current_period_end
