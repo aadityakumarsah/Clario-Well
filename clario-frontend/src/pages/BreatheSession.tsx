@@ -26,7 +26,6 @@ const PATTERNS: Record<string, BreathPattern> = {
     totalMinutes: 2,
     phases: [
       { name: "inhale", duration: 4, text: "Inhale" },
-      { name: "hold",   duration: 7, text: "Hold" },
       { name: "exhale", duration: 8, text: "Exhale" },
     ],
   },
@@ -37,9 +36,7 @@ const PATTERNS: Record<string, BreathPattern> = {
     totalMinutes: 3,
     phases: [
       { name: "inhale", duration: 4, text: "Inhale" },
-      { name: "hold",   duration: 4, text: "Hold" },
       { name: "exhale", duration: 6, text: "Exhale" },
-      { name: "rest",   duration: 2, text: "Rest" },
     ],
   },
   irritation: {
@@ -49,7 +46,6 @@ const PATTERNS: Record<string, BreathPattern> = {
     totalMinutes: 3,
     phases: [
       { name: "inhale", duration: 4, text: "Inhale" },
-      { name: "hold",   duration: 4, text: "Hold" },
       { name: "exhale", duration: 6, text: "Exhale" },
     ],
   },
@@ -60,7 +56,6 @@ const PATTERNS: Record<string, BreathPattern> = {
     totalMinutes: 3,
     phases: [
       { name: "inhale", duration: 5, text: "Inhale" },
-      { name: "hold",   duration: 2, text: "Hold" },
       { name: "exhale", duration: 7, text: "Exhale slowly" },
     ],
   },
@@ -71,9 +66,7 @@ const PATTERNS: Record<string, BreathPattern> = {
     totalMinutes: 3,
     phases: [
       { name: "inhale", duration: 4, text: "Inhale" },
-      { name: "hold",   duration: 4, text: "Hold" },
       { name: "exhale", duration: 4, text: "Exhale" },
-      { name: "rest",   duration: 4, text: "Rest" },
     ],
   },
   worry: {
@@ -83,7 +76,6 @@ const PATTERNS: Record<string, BreathPattern> = {
     totalMinutes: 4,
     phases: [
       { name: "inhale", duration: 4, text: "Inhale" },
-      { name: "hold",   duration: 6, text: "Hold" },
       { name: "exhale", duration: 8, text: "Exhale" },
     ],
   },
@@ -94,7 +86,6 @@ const PATTERNS: Record<string, BreathPattern> = {
     totalMinutes: 3,
     phases: [
       { name: "inhale", duration: 5, text: "Inhale" },
-      { name: "hold",   duration: 3, text: "Hold" },
       { name: "exhale", duration: 6, text: "Exhale" },
     ],
   },
@@ -105,7 +96,6 @@ const PATTERNS: Record<string, BreathPattern> = {
     totalMinutes: 3,
     phases: [
       { name: "inhale", duration: 4, text: "Inhale" },
-      { name: "hold",   duration: 4, text: "Hold" },
       { name: "exhale", duration: 6, text: "Exhale" },
     ],
   },
