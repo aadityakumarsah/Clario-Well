@@ -40,6 +40,7 @@ const makeGrid = (): Cell[][][] =>
   Array.from({ length: GW }, () =>
     Array.from({ length: GH }, () =>
       Array.from({ length: GD }, () => null)
+    )
   );
 
 // ─── Gesture helpers ────────────────────────────────────────────────────────
