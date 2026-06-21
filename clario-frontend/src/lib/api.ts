@@ -196,7 +196,8 @@ export async function getSession(sessionId: string): Promise<SessionDetailData> 
 }
 
 export async function generateSessionReport(sessionId: string): Promise<SessionDetailData> {
-  if (!BASE || sessionId.startsWith("local-")) throw new Error("No backend available for report generation");
+  if (!BASE) throw new Error("Backend URL not configured — add VITE_BACKEND_BASE_URL in Vercel environment variables");
+  if (sessionId.startsWith("local-")) throw new Error("Cannot generate report for a local session");
   const res = await fetch(`${BASE}/sessions/${encodeURIComponent(sessionId)}/report`, {
     method: "POST",
     headers: headers(),
