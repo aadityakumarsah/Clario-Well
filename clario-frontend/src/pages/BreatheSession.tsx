@@ -171,8 +171,9 @@ export default function BreatheSession() {
 
   // ── Breath cue audio (inhale / exhale) ─────────────────────────────────────
   // Two separate elements pre-created in the user-gesture tap so iOS allows play()
-  const inhaleAudioRef = useRef<HTMLAudioElement | null>(null);
-  const exhaleAudioRef = useRef<HTMLAudioElement | null>(null);
+  const inhaleAudioRef  = useRef<HTMLAudioElement | null>(null);
+  const exhaleAudioRef  = useRef<HTMLAudioElement | null>(null);
+  const skipFirstCueRef = useRef(false); // inhale already playing from start()
 
   // ── Voice guide (Gemini TTS) ────────────────────────────────────────────────
   const [voiceOn, setVoiceOn] = useState(false);
@@ -304,11 +305,12 @@ export default function BreatheSession() {
   }, [phaseIdx, running]);
 
   // ── Play inhale / exhale cue audio on phase change ─────────────────────────
-  // Elements are pre-unlocked in start() (user gesture), so play() works on iOS
   useEffect(() => {
     if (!running) return;
     const name = currentPhase.name;
     if (name === "inhale") {
+      // skip the very first fire — inhale already playing from start()
+      if (skipFirstCueRef.current) { skipFirstCueRef.current = false; return; }
       exhaleAudioRef.current?.pause();
       const a = inhaleAudioRef.current;
       if (a) { a.currentTime = 0; a.play().catch(() => {}); }
@@ -357,18 +359,22 @@ export default function BreatheSession() {
     setDone(false);
     phaseSpring.set(PHASE_TARGET[pattern.phases[0].name]);
 
-    // Create + unlock both cue audio elements inside this user-gesture tap
-    // so iOS allows subsequent play() calls from useEffect
+    // Create + unlock both cue elements inside this user-gesture tap.
+    // iOS only allows audio.play() when called synchronously in a gesture.
     const inhale = new Audio("/breadth/deepbreadth.m4a");
     inhale.volume = 0.85;
     inhaleAudioRef.current = inhale;
-    inhale.play().catch(() => {}); // plays first inhale cue immediately
+    inhale.play().catch(() => {}); // first inhale plays immediately
+    skipFirstCueRef.current = true; // tell the effect to skip this first fire
 
     const exhale = new Audio("/breadth/exhale.m4a");
-    exhale.volume = 0.85;
+    exhale.volume = 0;             // silent unlock
     exhaleAudioRef.current = exhale;
-    // pre-load exhale without playing (unlocked for later use)
-    exhale.load();
+    exhale.play().then(() => {
+      exhale.pause();
+      exhale.currentTime = 0;
+      exhale.volume = 0.85;        // restore for real playback later
+    }).catch(() => {});
 
     setRunning(true);
   };
