@@ -65,24 +65,16 @@ export interface VoiceSessionStart {
 }
 
 export async function startVoiceSession(): Promise<VoiceSessionStart> {
-  const fallback = (): VoiceSessionStart => ({
-    session_id: `local-${Date.now()}`,
-    user_id: "local",
-    created_at: new Date().toISOString(),
-  });
-
-  if (!BASE) return fallback();
-  try {
-    const res = await fetch(`${BASE}/sessions/start`, {
-      method: "POST",
-      headers: headers(),
-    });
-    const json = await safeJson(res);
-    if (!json.success || !json.data?.session_id) return fallback();
-    return json.data as VoiceSessionStart;
-  } catch {
-    return fallback();
+  if (!BASE) throw new Error("Backend URL not configured (VITE_BACKEND_BASE_URL missing)");
+  const res = await fetch(`${BASE}/sessions/start`, {
+    method: "POST",
+    headers: headers(),
+  }).catch((err) => { throw new Error(`Cannot reach backend: ${err.message}`); });
+  const json = await safeJson(res);
+  if (!json.success || !json.data?.session_id) {
+    throw new Error(json.message ?? `Backend error ${res.status} on /sessions/start`);
   }
+  return json.data as VoiceSessionStart;
 }
 
 export type MoodLabel =
