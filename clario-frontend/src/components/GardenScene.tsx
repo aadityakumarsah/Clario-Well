@@ -147,23 +147,14 @@ export default function GardenScene({ completed }: GardenSceneProps) {
         {/* Sky */}
         <motion.rect
           width="800" height="380" fill="url(#sky)"
+          initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 1 }}
         />
 
         {/* Sun */}
-        <motion.circle
-          cx="680" cy="55" r={16 + completed * 4}
-          fill="#FFD54F" opacity="0.9"
-          animate={{ r: 16 + completed * 4 }}
-          transition={{ duration: 1.2, ease: "easeOut" }}
-        />
-        <motion.circle
-          cx="680" cy="55" r={22 + completed * 5}
-          fill="#FFD54F" opacity="0.18"
-          animate={{ r: 22 + completed * 5 }}
-          transition={{ duration: 1.2, ease: "easeOut" }}
-        />
+        <circle cx="680" cy="55" r={16 + completed * 4} fill="#FFD54F" opacity="0.9" />
+        <circle cx="680" cy="55" r={22 + completed * 5} fill="#FFD54F" opacity="0.18" />
 
         {/* Background mountains / building silhouettes */}
         <g opacity="0.35">
@@ -197,11 +188,7 @@ export default function GardenScene({ completed }: GardenSceneProps) {
         </g>
 
         {/* Ground */}
-        <motion.rect
-          x="0" y="268" width="800" height="112"
-          fill="url(#ground)"
-          animate={{ fill: "url(#ground)" }}
-        />
+        <rect x="0" y="268" width="800" height="112" fill="url(#ground)" />
 
         {/* Ground grass texture (subtle wavy edge) */}
         <motion.path
@@ -221,7 +208,7 @@ export default function GardenScene({ completed }: GardenSceneProps) {
             const x = (xPct / 100) * 800;
             const baseY = 268 + Math.sin(xPct * 0.3) * 4;
             return (
-              <motion.path
+              <path
                 key={i}
                 d={`M${x} ${baseY} Q${x + 4 + hue * 0.3} ${baseY - h * 0.6} ${x + 2} ${baseY - h}`}
                 stroke={i % 3 === 0 ? "#66BB6A" : i % 3 === 1 ? "#4CAF50" : grassColor}
@@ -229,7 +216,6 @@ export default function GardenScene({ completed }: GardenSceneProps) {
                 fill="none"
                 strokeLinecap="round"
                 opacity="0.7"
-                animate={{ d: `M${x} ${baseY} Q${x + 4 + hue * 0.3} ${baseY - h * 0.6} ${x + 2} ${baseY - h}` }}
               />
             );
           })}
@@ -244,42 +230,14 @@ export default function GardenScene({ completed }: GardenSceneProps) {
         <path d="M180 268 Q190 275 198 277" stroke="#5D4037" strokeWidth="4" fill="none" strokeLinecap="round" />
 
         {/* Tree canopy shadow */}
-        <motion.ellipse
-          cx="169" cy="175"
-          rx={treeRadius * 0.9} ry={treeRadius * 0.85}
-          fill="#2E7D32" opacity="0.4"
-          animate={{ rx: treeRadius * 0.9, ry: treeRadius * 0.85 }}
-          transition={{ duration: 1.2, ease: "easeOut" }}
-        />
+        <ellipse cx="169" cy="175" rx={treeRadius * 0.9} ry={treeRadius * 0.85} fill="#2E7D32" opacity="0.4" />
         {/* Tree canopy main */}
-        <motion.circle
-          cx="169" cy="168"
-          r={treeRadius}
-          fill={completed >= 2 ? "#43A047" : "#388E3C"}
-          animate={{ r: treeRadius, fill: completed >= 2 ? "#43A047" : "#388E3C" }}
-          transition={{ duration: 1.2, ease: "easeOut" }}
-        />
+        <circle cx="169" cy="168" r={treeRadius} fill={completed >= 2 ? "#43A047" : "#388E3C"} />
         {/* Canopy highlight */}
-        <motion.circle
-          cx="155" cy="152"
-          r={treeRadius * 0.45}
-          fill="#4CAF50" opacity="0.5"
-          animate={{ r: treeRadius * 0.45 }}
-          transition={{ duration: 1.2, ease: "easeOut" }}
-        />
+        <circle cx="155" cy="152" r={treeRadius * 0.45} fill="#4CAF50" opacity="0.5" />
         {/* Canopy sub-clusters */}
-        <motion.circle
-          cx="200" cy="175" r={treeRadius * 0.55}
-          fill="#388E3C" opacity="0.8"
-          animate={{ r: treeRadius * 0.55 }}
-          transition={{ duration: 1.2, ease: "easeOut" }}
-        />
-        <motion.circle
-          cx="145" cy="180" r={treeRadius * 0.5}
-          fill="#33691E" opacity="0.7"
-          animate={{ r: treeRadius * 0.5 }}
-          transition={{ duration: 1.2, ease: "easeOut" }}
-        />
+        <circle cx="200" cy="175" r={treeRadius * 0.55} fill="#388E3C" opacity="0.8" />
+        <circle cx="145" cy="180" r={treeRadius * 0.5} fill="#33691E" opacity="0.7" />
 
         {/* Flowers (in ground layer, above grass, behind fence front) */}
         <g style={{ clipPath: "inset(0 0 0 0)" }}>

@@ -6,7 +6,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence, useSpring, useTransform } from "framer-motion";
-import { X, UserRound, Music2, VolumeX, Vibrate } from "lucide-react";
+import { X, UserRound, Music2, VolumeX, Vibrate, ArrowLeft } from "lucide-react";
 
 type Phase = "inhale" | "hold" | "exhale" | "rest";
 
@@ -402,6 +402,17 @@ export default function BreatheSession() {
           <path d="M 400,-15 C 315,10 215,0 65,30 C 105,65 225,60 325,40 Z" opacity="0.7" />
         </g>
       </svg>
+
+      {/* ── Back button ───────────────────────────────────────────────────── */}
+      <button
+        type="button"
+        onClick={() => navigate("/daily-check")}
+        className="absolute top-5 left-5 z-30 flex items-center gap-1.5 px-3 py-2 rounded-full transition-opacity hover:opacity-60 text-sm"
+        style={{ backgroundColor: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.6)" }}
+      >
+        <ArrowLeft className="w-4 h-4" />
+        Home
+      </button>
 
       {/* ── Close button ──────────────────────────────────────────────────── */}
       <button

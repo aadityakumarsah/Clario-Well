@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Paintbrush, Box, Sparkles } from "lucide-react";
+import { Paintbrush, Box, Sparkles, ArrowLeft } from "lucide-react";
 
 const CARDS = [
   {
@@ -50,6 +50,14 @@ export default function Relief() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
+          <button
+            onClick={() => navigate("/daily-check")}
+            className="flex items-center gap-1.5 mb-5 text-sm transition-opacity hover:opacity-70"
+            style={{ color: "rgba(255,255,255,0.45)" }}
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Home
+          </button>
           <p className="text-xs uppercase tracking-widest mb-2" style={{ color: "rgba(255,255,255,0.3)" }}>
             relief
           </p>
