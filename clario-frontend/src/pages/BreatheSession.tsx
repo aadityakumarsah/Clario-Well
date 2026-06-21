@@ -183,6 +183,7 @@ export default function BreatheSession() {
   const [voiceOn, setVoiceOn] = useState(false);
   const [voiceLoading, setVoiceLoading] = useState(false);
   const voiceCacheRef = useRef<Record<string, string>>({});  // phrase → object URL
+  // Single reusable Audio element — created & unlocked during the user gesture
   const guideAudioRef = useRef<HTMLAudioElement | null>(null);
 
   const GUIDE_PHRASES: Record<Phase, string> = {
@@ -212,26 +213,46 @@ export default function BreatheSession() {
     );
   };
 
-  const toggleVoice = async () => {
-    if (!voiceOn && Object.keys(voiceCacheRef.current).length === 0) {
-      setVoiceLoading(true);
-      await fetchVoiceGuide();
-      setVoiceLoading(false);
-    }
-    setVoiceOn((prev) => !prev);
+  const playGuidePhrase = (text: string) => {
+    const url = voiceCacheRef.current[text];
+    if (!url || !guideAudioRef.current) return;
+    const a = guideAudioRef.current;
+    a.pause();
+    a.src = url;
+    a.currentTime = 0;
+    a.play().catch(() => {});
   };
 
-  // Play guide clip on each phase change
+  const toggleVoice = async () => {
+    if (voiceOn) {
+      guideAudioRef.current?.pause();
+      setVoiceOn(false);
+      return;
+    }
+
+    // Create & unlock Audio element inside user gesture (required by iOS)
+    if (!guideAudioRef.current) {
+      const a = new Audio();
+      a.volume = 0.9;
+      guideAudioRef.current = a;
+    }
+
+    setVoiceLoading(true);
+    await fetchVoiceGuide();
+    setVoiceLoading(false);
+    setVoiceOn(true);
+
+    // Play current phase immediately (still within user gesture callstack on most browsers)
+    if (running) {
+      const text = GUIDE_PHRASES[currentPhase.name];
+      playGuidePhrase(text);
+    }
+  };
+
+  // Play guide clip on each phase change (timer-driven — Audio already unlocked)
   useEffect(() => {
     if (!voiceOn || !running) return;
-    const text = GUIDE_PHRASES[currentPhase.name];
-    const url = voiceCacheRef.current[text];
-    if (!url) return;
-    guideAudioRef.current?.pause();
-    const a = new Audio(url);
-    a.volume = 0.9;
-    guideAudioRef.current = a;
-    a.play().catch(() => {});
+    playGuidePhrase(GUIDE_PHRASES[currentPhase.name]);
   }, [phaseIdx, running, voiceOn]);
 
   // Revoke cached object URLs on unmount
