@@ -1,341 +1,500 @@
 /**
- * Space Blocks — a satisfying 3D tower-stacking game.
- * Tap / Space to drop the moving block onto the tower.
- * Blocks stack with perfect / partial / miss scoring.
+ * Space Blocks — AR block building with MediaPipe Hands
+ * Gesture map:
+ *   Index pointing (☝️)  → move cursor over isometric grid
+ *   Pinch (✊)            → place block at cursor
+ *   Open palm (🖐)        → delete top block at cursor
+ *
+ * The isometric 3D grid floats over the live camera feed.
+ * Hand position is mapped linearly to grid XZ coords.
  */
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { X } from "lucide-react";
-import ReliefReport from "../components/ReliefReport";
+import { ArrowLeft, Trash2 } from "lucide-react";
 
-const SESSION_SECONDS = 3 * 60;
-const BLOCK_H = 24;
-const COLORS = ["#A78BFA", "#60A5FA", "#34D399", "#F472B6", "#FBBF24", "#FB923C"];
+declare const Hands: any;
+declare const Camera: any;
 
-interface Block {
-  x: number;
-  width: number;
-  color: string;
-  level: number;
-}
+// ─── Grid config ────────────────────────────────────────────────────────────
+const GW = 6; // grid width  (x)
+const GD = 6; // grid depth  (z)
+const GH = 8; // max stack height (y)
 
-function colorAt(level: number) {
-  return COLORS[level % COLORS.length];
-}
+// ─── Block palette (top / left-face / right-face) ───────────────────────────
+const BLOCKS = [
+  { name: "Grass",    top: "#69C362", lft: "#3E9E38", rgt: "#2D7A29" },
+  { name: "Stone",    top: "#C2C2C2", lft: "#8A8A8A", rgt: "#676767" },
+  { name: "Wood",     top: "#C4A97D", lft: "#9C7C4E", rgt: "#7A5C30" },
+  { name: "Sand",     top: "#FFF08A", lft: "#E8CC45", rgt: "#C9A800" },
+  { name: "Gold",     top: "#FFE066", lft: "#F0B800", rgt: "#C98200" },
+  { name: "Ice",      top: "#A8DDFF", lft: "#57B8F0", rgt: "#0D85D4" },
+  { name: "Lava",     top: "#FF6B35", lft: "#D93700", rgt: "#A01E00" },
+  { name: "Diamond",  top: "#80FFEA", lft: "#00BFA5", rgt: "#00796B" },
+];
 
+type Cell = number | null;
+
+const makeGrid = (): Cell[][][] =>
+  Array.from({ length: GW }, () =>
+    Array.from({ length: GH }, () =>
+      Array.from({ length: GD }, () => null)
+  );
+
+// ─── Gesture helpers ────────────────────────────────────────────────────────
+const isPointing = (lm: any[]) =>
+  lm[8].y < lm[6].y &&
+  lm[12].y > lm[10].y &&
+  lm[16].y > lm[14].y &&
+  lm[20].y > lm[18].y;
+
+const isPinch = (lm: any[], thr = 0.06) =>
+  Math.hypot(lm[4].x - lm[8].x, lm[4].y - lm[8].y) < thr;
+
+const isPalm = (lm: any[]) =>
+  !isPinch(lm) &&
+  lm[8].y < lm[6].y &&
+  lm[12].y < lm[10].y &&
+  lm[16].y < lm[14].y &&
+  lm[20].y < lm[18].y;
+
+// ─── Component ───────────────────────────────────────────────────────────────
 export default function ReliefBlocks() {
   const navigate = useNavigate();
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const stateRef = useRef({
-    tower: [] as Block[],
-    movingX: 0,
-    movingDir: 1,
-    movingWidth: 160,
-    speed: 1.8,
-    score: 0,
-    streak: 0,
-    gameOver: false,
-  });
-  const rafRef = useRef<number>(0);
+  const videoRef   = useRef<HTMLVideoElement>(null);
+  const canvasRef  = useRef<HTMLCanvasElement>(null);
 
-  const [score, setScore] = useState(0);
-  const [streak, setStreak] = useState(0);
-  const [gameOver, setGameOver] = useState(false);
-  const [elapsed, setElapsed] = useState(0);
-  const [done, setDone] = useState(false);
-  const [started, setStarted] = useState(false);
-  const [feedback, setFeedback] = useState<{ text: string; color: string } | null>(null);
+  const gridRef     = useRef<Cell[][][]>(makeGrid());
+  const cursorRef   = useRef({ x: Math.floor(GW / 2), z: Math.floor(GD / 2) });
+  const selTypeRef  = useRef(0);
+  const blockCntRef = useRef(0);
 
-  // Timer
-  useEffect(() => {
-    if (!started || done || gameOver) return;
-    const id = setInterval(() => {
-      setElapsed((e) => {
-        if (e + 1 >= SESSION_SECONDS) { setDone(true); return SESSION_SECONDS; }
-        return e + 1;
-      });
-    }, 1000);
-    return () => clearInterval(id);
-  }, [started, done, gameOver]);
+  const [cameraReady, setCameraReady] = useState(false);
+  const [gesture,     setGesture]     = useState<"idle" | "point" | "pinch" | "palm">("idle");
+  const [selType,     setSelType]     = useState(0);
+  const [blockCount,  setBlockCount]  = useState(0);
+  const [feedback,    setFeedback]    = useState<{ msg: string; color: string } | null>(null);
 
-  const showFeedback = (text: string, color: string) => {
-    setFeedback({ text, color });
-    setTimeout(() => setFeedback(null), 900);
+  const pinchCool  = useRef(false);
+  const deleteCool = useRef(false);
+  const rafRef     = useRef(0);
+
+  const toast = (msg: string, color: string) => {
+    setFeedback({ msg, color });
+    setTimeout(() => setFeedback(null), 750);
   };
 
-  const initGame = useCallback(() => {
-    const canvas = canvasRef.current!;
-    const W = canvas.width;
-    const baseBlock: Block = { x: W / 2 - 80, width: 160, color: colorAt(0), level: 0 };
-    stateRef.current = {
-      tower: [baseBlock],
-      movingX: 0,
-      movingDir: 1,
-      movingWidth: 160,
-      speed: 1.8,
-      score: 0,
-      streak: 0,
-      gameOver: false,
-    };
-    setScore(0);
-    setStreak(0);
-    setGameOver(false);
+  const topY = (x: number, z: number) => {
+    for (let y = GH - 1; y >= 0; y--)
+      if (gridRef.current[x][y][z] !== null) return y + 1;
+    return 0;
+  };
+
+  const placeBlock = useCallback((x: number, z: number) => {
+    const y = topY(x, z);
+    if (y >= GH) { toast("Column full!", "#F87171"); return; }
+    gridRef.current[x][y][z] = selTypeRef.current;
+    blockCntRef.current++;
+    setBlockCount(blockCntRef.current);
+    toast("Placed ✓", BLOCKS[selTypeRef.current].top);
   }, []);
 
-  const drop = useCallback(() => {
-    const s = stateRef.current;
-    if (s.gameOver || !started) return;
+  const deleteBlock = useCallback((x: number, z: number) => {
+    const y = topY(x, z) - 1;
+    if (y < 0) return;
+    gridRef.current[x][y][z] = null;
+    blockCntRef.current = Math.max(0, blockCntRef.current - 1);
+    setBlockCount(blockCntRef.current);
+    toast("Removed", "#F87171");
+  }, []);
 
-    const top = s.tower[s.tower.length - 1];
-    const mX = s.movingX;
-    const mW = s.movingWidth;
-
-    // Overlap calculation
-    const overlapLeft = Math.max(top.x, mX);
-    const overlapRight = Math.min(top.x + top.width, mX + mW);
-    const overlap = overlapRight - overlapLeft;
-
-    if (overlap <= 4) {
-      // Miss
-      s.gameOver = true;
-      s.streak = 0;
-      setGameOver(true);
-      setStreak(0);
-      showFeedback("Miss!", "#F87171");
-      return;
-    }
-
-    const newBlock: Block = {
-      x: overlapLeft,
-      width: overlap,
-      color: colorAt(s.tower.length),
-      level: s.tower.length,
-    };
-    s.tower.push(newBlock);
-    s.movingWidth = overlap;
-    s.score += Math.round(overlap);
-    s.streak += 1;
-    s.speed = Math.min(5.5, 1.8 + s.tower.length * 0.12);
-
-    setScore(s.score);
-    setStreak(s.streak);
-
-    const perfect = Math.abs(overlap - top.width) < 3;
-    showFeedback(perfect ? "Perfect! ✨" : s.streak > 4 ? `Streak ${s.streak}!` : "Nice", perfect ? "#34D399" : s.streak > 4 ? "#FBBF24" : "#A78BFA");
-  }, [started]);
-
-  // Key handler
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.code === "Space" || e.code === "Enter") { e.preventDefault(); drop(); } };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [drop]);
-
-  // Draw loop
-  useEffect(() => {
-    if (!started || gameOver || done) return;
-    const canvas = canvasRef.current!;
-    const ctx = canvas.getContext("2d")!;
-
-    const loop = () => {
-      const s = stateRef.current;
-      const W = canvas.width;
-      const H = canvas.height;
-
-      ctx.clearRect(0, 0, W, H);
-
-      // Sky gradient
-      const grad = ctx.createLinearGradient(0, 0, 0, H);
-      grad.addColorStop(0, "#0A0A18");
-      grad.addColorStop(1, "#0F0E0C");
-      ctx.fillStyle = grad;
-      ctx.fillRect(0, 0, W, H);
-
-      // Stars
-      ctx.fillStyle = "rgba(255,255,255,0.35)";
-      for (let i = 0; i < 40; i++) {
-        const sx = ((i * 173 + 53) % 100) / 100 * W;
-        const sy = ((i * 97 + 11) % 60) / 100 * H;
-        ctx.beginPath();
-        ctx.arc(sx, sy, 0.8, 0, Math.PI * 2);
-        ctx.fill();
-      }
-
-      const baseY = H - 60;
-      const visibleLevels = Math.min(s.tower.length, Math.floor((H - 120) / BLOCK_H));
-      const startLevel = s.tower.length - visibleLevels;
-
-      // Draw tower blocks
-      s.tower.slice(startLevel).forEach((b, i) => {
-        const level = startLevel + i;
-        const y = baseY - (level - startLevel + 1) * BLOCK_H;
-        const alpha = 0.55 + i / visibleLevels * 0.45;
-
-        // Block shadow
-        ctx.fillStyle = `rgba(0,0,0,0.3)`;
-        ctx.fillRect(b.x + 4, y + 4, b.width, BLOCK_H - 2);
-
-        // Block face
-        ctx.fillStyle = b.color + Math.round(alpha * 255).toString(16).padStart(2, "0");
-        ctx.fillRect(b.x, y, b.width, BLOCK_H - 2);
-
-        // Top shine
-        ctx.fillStyle = "rgba(255,255,255,0.12)";
-        ctx.fillRect(b.x, y, b.width, 4);
-
-        // 3D left face
-        ctx.fillStyle = "rgba(0,0,0,0.25)";
-        ctx.beginPath();
-        ctx.moveTo(b.x, y);
-        ctx.lineTo(b.x - 8, y + 6);
-        ctx.lineTo(b.x - 8, y + BLOCK_H + 4);
-        ctx.lineTo(b.x, y + BLOCK_H - 2);
-        ctx.fill();
-      });
-
-      // Moving block
-      const topBlock = s.tower[s.tower.length - 1];
-      const movingY = baseY - (s.tower.length - startLevel) * BLOCK_H - BLOCK_H;
-      const mc = colorAt(s.tower.length);
-
-      ctx.fillStyle = `rgba(0,0,0,0.25)`;
-      ctx.fillRect(s.movingX + 4, movingY + 4, s.movingWidth, BLOCK_H - 2);
-      ctx.fillStyle = mc + "cc";
-      ctx.fillRect(s.movingX, movingY, s.movingWidth, BLOCK_H - 2);
-      ctx.fillStyle = "rgba(255,255,255,0.2)";
-      ctx.fillRect(s.movingX, movingY, s.movingWidth, 4);
-
-      // Ghost / alignment guide
-      ctx.strokeStyle = mc + "44";
-      ctx.lineWidth = 1;
-      ctx.setLineDash([4, 4]);
-      ctx.strokeRect(topBlock.x, movingY, topBlock.width, BLOCK_H - 2);
-      ctx.setLineDash([]);
-
-      // Move the block
-      const W2 = W;
-      s.movingX += s.movingDir * s.speed;
-      if (s.movingX + s.movingWidth > W2) { s.movingX = W2 - s.movingWidth; s.movingDir = -1; }
-      if (s.movingX < 0) { s.movingX = 0; s.movingDir = 1; }
-
-      rafRef.current = requestAnimationFrame(loop);
-    };
-
-    rafRef.current = requestAnimationFrame(loop);
-    return () => cancelAnimationFrame(rafRef.current);
-  }, [started, gameOver, done]);
-
-  const handleStart = () => {
-    const canvas = canvasRef.current!;
-    canvas.width = canvas.offsetWidth;
-    canvas.height = canvas.offsetHeight;
-    initGame();
-    setStarted(true);
+  const clearAll = () => {
+    gridRef.current = makeGrid();
+    blockCntRef.current = 0;
+    setBlockCount(0);
   };
 
-  const timeLeft = SESSION_SECONDS - elapsed;
-  const timeStr = `${Math.floor(timeLeft / 60)}:${String(timeLeft % 60).padStart(2, "0")}`;
+  // ─── Draw loop ──────────────────────────────────────────────────────────
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
 
-  if (done) return <ReliefReport activity="blocks" duration={SESSION_SECONDS} score={score} onClose={() => navigate("/relief")} />;
+    const draw = () => {
+      const ctx = canvas.getContext("2d");
+      if (!ctx) { rafRef.current = requestAnimationFrame(draw); return; }
 
+      const W = canvas.width;
+      const H = canvas.height;
+      ctx.clearRect(0, 0, W, H);
+
+      // Responsive tile dimensions
+      // TILE_W sized so grid fills ~88% screen width; steeper angle (TILE_H=0.65*TILE_W)
+      const TW  = Math.min(70, (W * 0.88) / (GW + GD - 1));
+      const TH  = TW * 0.65;   // tile height (steeper than classic iso = more vertical room)
+      const BH  = TW * 0.85;   // block height in pixels
+
+      // Center the grid: iso origin so gx=GW/2, gz=GD/2 is horizontally centred
+      // and the full scene (blocks + ground) is vertically centred
+      const groundH   = (GW + GD - 2) * TH / 2;   // height of ground diamond
+      const maxStackH = (GH - 1) * BH;              // tallest possible stack
+      const sceneH    = groundH + maxStackH;
+      const OX = W / 2;
+      const OY = H * 0.5 + groundH * 0.5 - sceneH * 0.35;
+
+      // Isometric project: top-centre of block column at (gx, gy, gz)
+      const iso = (gx: number, gy: number, gz: number) => ({
+        sx: (gx - gz) * TW / 2 + OX,
+        sy: (gx + gz) * TH / 2 - gy * BH + OY,
+      });
+
+      // Draw ground tiles (back-to-front by depth)
+      for (let depth = 0; depth <= GW + GD - 2; depth++) {
+        for (let x = 0; x < GW; x++) {
+          const z = depth - x;
+          if (z < 0 || z >= GD) continue;
+          const { sx, sy } = iso(x, 0, z);
+          const hw = TW / 2, hh = TH / 2;
+          const isCursor = cursorRef.current.x === x && cursorRef.current.z === z;
+
+          // Tile fill
+          ctx.fillStyle = isCursor ? "rgba(100,220,100,0.32)" : "rgba(40,100,50,0.18)";
+          ctx.beginPath();
+          ctx.moveTo(sx,      sy - hh);
+          ctx.lineTo(sx + hw, sy);
+          ctx.lineTo(sx,      sy + hh);
+          ctx.lineTo(sx - hw, sy);
+          ctx.closePath();
+          ctx.fill();
+
+          // Tile border
+          ctx.strokeStyle = isCursor ? "rgba(100,220,100,0.7)" : "rgba(80,160,80,0.22)";
+          ctx.lineWidth   = isCursor ? 1.5 : 0.6;
+          ctx.stroke();
+        }
+      }
+
+      // Collect blocks + ghost, sort back-to-front
+      const items: { gx: number; gy: number; gz: number; type: number; ghost: boolean }[] = [];
+
+      for (let z = 0; z < GD; z++)
+        for (let x = 0; x < GW; x++)
+          for (let y = 0; y < GH; y++) {
+            const t = gridRef.current[x][y][z];
+            if (t !== null) items.push({ gx: x, gy: y, gz: z, type: t, ghost: false });
+          }
+
+      // Ghost block at cursor top
+      const cur = cursorRef.current;
+      const ghostY = topY(cur.x, cur.z);
+      if (ghostY < GH)
+        items.push({ gx: cur.x, gy: ghostY, gz: cur.z, type: selTypeRef.current, ghost: true });
+
+      // Painter's sort: ascending depth (gx+gz), then ascending gy
+      items.sort((a, b) => {
+        const da = a.gx + a.gz, db = b.gx + b.gz;
+        return da !== db ? da - db : a.gy - b.gy;
+      });
+
+      // Draw each block
+      for (const { gx, gy, gz, type, ghost } of items) {
+        // Top-centre of this block is at (gx, gy+1, gz)
+        const { sx, sy } = iso(gx, gy + 1, gz);
+        const hw = TW / 2, hh = TH / 2;
+        const bt = BLOCKS[type];
+        ctx.globalAlpha = ghost ? 0.48 : 1;
+
+        // ── Top face ──
+        ctx.fillStyle = bt.top;
+        ctx.beginPath();
+        ctx.moveTo(sx,      sy - hh);
+        ctx.lineTo(sx + hw, sy);
+        ctx.lineTo(sx,      sy + hh);
+        ctx.lineTo(sx - hw, sy);
+        ctx.closePath();
+        ctx.fill();
+
+        // ── Left face (front-left, darker) ──
+        ctx.fillStyle = bt.lft;
+        ctx.beginPath();
+        ctx.moveTo(sx - hw, sy);
+        ctx.lineTo(sx,      sy + hh);
+        ctx.lineTo(sx,      sy + hh + BH);
+        ctx.lineTo(sx - hw, sy + BH);
+        ctx.closePath();
+        ctx.fill();
+
+        // ── Right face (front-right, darkest) ──
+        ctx.fillStyle = bt.rgt;
+        ctx.beginPath();
+        ctx.moveTo(sx,      sy + hh);
+        ctx.lineTo(sx + hw, sy);
+        ctx.lineTo(sx + hw, sy + BH);
+        ctx.lineTo(sx,      sy + hh + BH);
+        ctx.closePath();
+        ctx.fill();
+
+        // ── Outline (subtle depth) ──
+        if (!ghost) {
+          ctx.globalAlpha = 0.18;
+          ctx.strokeStyle = "#000";
+          ctx.lineWidth   = 0.7;
+          // top face
+          ctx.beginPath();
+          ctx.moveTo(sx, sy - hh);
+          ctx.lineTo(sx + hw, sy);
+          ctx.lineTo(sx, sy + hh);
+          ctx.lineTo(sx - hw, sy);
+          ctx.closePath();
+          ctx.stroke();
+          // vertical edges + bottom
+          ctx.beginPath();
+          ctx.moveTo(sx - hw, sy);      ctx.lineTo(sx - hw, sy + BH);
+          ctx.moveTo(sx,      sy + hh); ctx.lineTo(sx,      sy + hh + BH);
+          ctx.moveTo(sx + hw, sy);      ctx.lineTo(sx + hw, sy + BH);
+          ctx.moveTo(sx - hw, sy + BH);
+          ctx.lineTo(sx, sy + hh + BH);
+          ctx.lineTo(sx + hw, sy + BH);
+          ctx.stroke();
+          ctx.globalAlpha = 1;
+        }
+
+        ctx.globalAlpha = 1;
+      }
+
+      // Cursor ring around ghost block top
+      if (ghostY < GH) {
+        const { sx, sy } = iso(cur.x, ghostY + 1, cur.z);
+        const hw = TW / 2 + 3, hh = TH / 2 + 2;
+        ctx.strokeStyle = BLOCKS[selTypeRef.current].top;
+        ctx.lineWidth   = 2;
+        ctx.globalAlpha = 0.75;
+        ctx.setLineDash([5, 3]);
+        ctx.beginPath();
+        ctx.moveTo(sx,      sy - hh);
+        ctx.lineTo(sx + hw, sy);
+        ctx.lineTo(sx,      sy + hh);
+        ctx.lineTo(sx - hw, sy);
+        ctx.closePath();
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.globalAlpha = 1;
+      }
+
+      rafRef.current = requestAnimationFrame(draw);
+    };
+
+    rafRef.current = requestAnimationFrame(draw);
+    return () => cancelAnimationFrame(rafRef.current);
+  }, []);
+
+  // ─── Canvas resize ───────────────────────────────────────────────────────
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const resize = () => {
+      canvas.width  = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    resize();
+    window.addEventListener("resize", resize);
+    return () => window.removeEventListener("resize", resize);
+  }, []);
+
+  // ─── MediaPipe Hands ─────────────────────────────────────────────────────
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || typeof Hands === "undefined" || typeof Camera === "undefined") return;
+
+    const hands = new Hands({
+      locateFile: (f: string) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${f}`,
+    });
+    hands.setOptions({
+      maxNumHands: 1,
+      modelComplexity: 1,
+      minDetectionConfidence: 0.75,
+      minTrackingConfidence: 0.6,
+    });
+
+    hands.onResults((results: any) => {
+      if (!results.multiHandLandmarks?.length) {
+        setGesture("idle");
+        return;
+      }
+
+      const lm = results.multiHandLandmarks[0];
+
+      // Mirror X (camera is mirrored in display)
+      const hx = 1 - lm[8].x;
+      const hy = lm[8].y;
+
+      // Linear mapping: hand 0-1 → grid 0 to GW/GD-1
+      const gx = Math.max(0, Math.min(GW - 1, Math.floor(hx * GW)));
+      const gz = Math.max(0, Math.min(GD - 1, Math.floor(hy * GD)));
+      cursorRef.current = { x: gx, z: gz };
+
+      const pinching = isPinch(lm);
+      const palm     = !pinching && isPalm(lm);
+      const pointing = !pinching && !palm && isPointing(lm);
+
+      if (pinching) {
+        setGesture("pinch");
+        if (!pinchCool.current) {
+          pinchCool.current = true;
+          placeBlock(gx, gz);
+          setTimeout(() => { pinchCool.current = false; }, 650);
+        }
+      } else if (palm) {
+        setGesture("palm");
+        if (!deleteCool.current) {
+          deleteCool.current = true;
+          deleteBlock(gx, gz);
+          setTimeout(() => { deleteCool.current = false; }, 650);
+        }
+      } else if (pointing) {
+        setGesture("point");
+      } else {
+        setGesture("idle");
+      }
+    });
+
+    let stopped = false;
+    const camera = new Camera(video, {
+      onFrame: async () => {
+        if (stopped) return;
+        try { await hands.send({ image: video }); } catch { /* ignore post-close */ }
+      },
+      width: 1280, height: 720,
+    });
+    camera.start().then(() => setCameraReady(true));
+
+    return () => {
+      stopped = true;
+      camera.stop();
+      setTimeout(() => { try { hands.close(); } catch { /* */ } }, 50);
+    };
+  }, [placeBlock, deleteBlock]);
+
+  // ─── Gesture label ────────────────────────────────────────────────────────
+  const gestureLabel = () => {
+    if (gesture === "pinch") return "✊ Placing…";
+    if (gesture === "palm")  return "🖐 Deleting…";
+    if (gesture === "point") return "☝️ Moving cursor";
+    return "Show your hand";
+  };
+
+  // ─── Render ───────────────────────────────────────────────────────────────
   return (
-    <div className="fixed inset-0 overflow-hidden" style={{ background: "#0A0A18" }} onClick={drop}>
-      <canvas ref={canvasRef} className="absolute inset-0 w-full h-full" />
+    <div className="fixed inset-0 overflow-hidden bg-black">
+      {/* Live camera */}
+      <video
+        ref={videoRef}
+        className="absolute inset-0 w-full h-full object-cover"
+        style={{ transform: "scaleX(-1)", opacity: cameraReady ? 0.48 : 0 }}
+        muted
+        playsInline
+      />
+
+      {/* Isometric block canvas */}
+      <canvas
+        ref={canvasRef}
+        className="absolute inset-0 w-full h-full"
+        style={{ zIndex: 10 }}
+      />
+
+      {/* Camera loading */}
+      {!cameraReady && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center z-50">
+          <div
+            className="w-8 h-8 rounded-full border-2 animate-spin mb-3"
+            style={{ borderColor: "#69C362", borderTopColor: "transparent" }}
+          />
+          <p className="text-sm" style={{ color: "rgba(255,255,255,0.5)" }}>
+            Starting camera…
+          </p>
+        </div>
+      )}
 
       {/* Top bar */}
-      <div className="absolute top-0 left-0 right-0 z-20 flex items-center justify-between px-4 pt-4 pb-2"
-        style={{ background: "linear-gradient(to bottom, rgba(10,10,24,0.9), transparent)" }}>
-        <button onClick={(e) => { e.stopPropagation(); navigate("/relief"); }}
-          className="w-9 h-9 rounded-full flex items-center justify-center" style={{ background: "rgba(255,255,255,0.08)" }}>
-          <X className="w-4 h-4 text-white" />
+      <div
+        className="absolute top-0 left-0 right-0 z-30 flex items-center justify-between px-4 pt-5 pb-3"
+        style={{ background: "linear-gradient(to bottom, rgba(0,0,0,0.72) 0%, transparent 100%)" }}
+      >
+        <button
+          onClick={() => navigate("/relief")}
+          className="flex items-center gap-1.5 px-3 py-2 rounded-full text-sm"
+          style={{ background: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.7)" }}
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back
         </button>
+
         <div className="text-center">
-          <div className="text-white font-bold text-xl tabular-nums">{score}</div>
-          <div className="text-xs tabular-nums" style={{ color: "rgba(255,255,255,0.35)" }}>{timeStr}</div>
+          <div className="text-white font-bold text-base">🧱 {blockCount}</div>
+          <div className="text-xs tabular-nums" style={{ color: "rgba(255,255,255,0.38)" }}>
+            {gestureLabel()}
+          </div>
         </div>
-        <div className="text-right">
-          {streak > 1 && (
-            <div className="text-xs font-semibold" style={{ color: "#FBBF24" }}>🔥 {streak}</div>
-          )}
-          <div className="text-xs" style={{ color: "rgba(255,255,255,0.3)" }}>tap to drop</div>
-        </div>
+
+        <button
+          onClick={clearAll}
+          className="w-9 h-9 rounded-full flex items-center justify-center"
+          style={{ background: "rgba(255,255,255,0.08)" }}
+        >
+          <Trash2 className="w-4 h-4" style={{ color: "rgba(255,255,255,0.45)" }} />
+        </button>
       </div>
 
       {/* Feedback toast */}
       <AnimatePresence>
         {feedback && (
           <motion.div
-            initial={{ opacity: 0, y: -10, scale: 0.9 }}
+            key={feedback.msg + feedback.color}
+            initial={{ opacity: 0, y: -8, scale: 0.9 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -16, scale: 0.85 }}
-            className="absolute top-20 left-1/2 z-30 px-4 py-2 rounded-full text-sm font-bold"
-            style={{ x: "-50%", color: feedback.color, background: feedback.color + "22", border: `1px solid ${feedback.color}44` }}
+            exit={{ opacity: 0, y: -14, scale: 0.88 }}
+            className="absolute top-20 left-1/2 z-40 px-4 py-1.5 rounded-full text-xs font-bold pointer-events-none"
+            style={{
+              x: "-50%",
+              color: feedback.color,
+              background: feedback.color + "22",
+              border: `1px solid ${feedback.color}44`,
+            }}
           >
-            {feedback.text}
+            {feedback.msg}
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Start overlay */}
-      <AnimatePresence>
-        {!started && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="absolute inset-0 z-30 flex flex-col items-center justify-center"
-            style={{ background: "rgba(10,10,24,0.85)" }}
-          >
-            <motion.div initial={{ y: 20 }} animate={{ y: 0 }} className="text-center px-8">
-              <div className="text-5xl mb-4">🧱</div>
-              <h2 className="text-2xl font-bold text-white mb-2">Space Blocks</h2>
-              <p className="text-sm mb-2" style={{ color: "rgba(255,255,255,0.45)" }}>Stack blocks as high as you can</p>
-              <p className="text-xs mb-8" style={{ color: "rgba(255,255,255,0.3)" }}>Tap screen · Space bar · Enter</p>
-              <button
-                onClick={(e) => { e.stopPropagation(); handleStart(); }}
-                className="px-8 py-3 rounded-2xl text-white font-semibold text-sm"
-                style={{ background: "rgba(167,139,250,0.2)", border: "1px solid rgba(167,139,250,0.4)" }}
-              >
-                Start Building
-              </button>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Block type palette */}
+      <div className="absolute bottom-6 left-0 right-0 z-30 flex flex-col items-center gap-3">
+        <div className="flex items-center gap-2">
+          {BLOCKS.map((bt, i) => (
+            <motion.button
+              key={i}
+              whileTap={{ scale: 0.88 }}
+              onClick={() => { selTypeRef.current = i; setSelType(i); }}
+              className="rounded-lg transition-all"
+              style={{
+                width:  selType === i ? 38 : 28,
+                height: selType === i ? 38 : 28,
+                background: `linear-gradient(145deg, ${bt.top}, ${bt.rgt})`,
+                border: selType === i ? "2.5px solid white" : "2px solid rgba(255,255,255,0.15)",
+                boxShadow: selType === i ? `0 0 14px ${bt.top}99` : "none",
+                transition: "all 0.18s",
+              }}
+            />
+          ))}
+        </div>
 
-      {/* Game over overlay */}
-      <AnimatePresence>
-        {gameOver && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="absolute inset-0 z-30 flex flex-col items-center justify-center"
-            style={{ background: "rgba(10,10,24,0.85)" }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <motion.div initial={{ y: 20 }} animate={{ y: 0 }} className="text-center px-8">
-              <div className="text-4xl mb-3">💫</div>
-              <h2 className="text-xl font-bold text-white mb-1">Tower Fell</h2>
-              <p className="text-3xl font-bold mb-1" style={{ color: "#A78BFA" }}>{score}</p>
-              <p className="text-xs mb-6" style={{ color: "rgba(255,255,255,0.35)" }}>total score</p>
-              <div className="flex gap-3 justify-center">
-                <button
-                  onClick={() => { handleStart(); }}
-                  className="px-6 py-2.5 rounded-xl text-white text-sm font-semibold"
-                  style={{ background: "rgba(167,139,250,0.2)", border: "1px solid rgba(167,139,250,0.4)" }}
-                >Try Again</button>
-                <button
-                  onClick={() => setDone(true)}
-                  className="px-6 py-2.5 rounded-xl text-sm"
-                  style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.6)" }}
-                >See Report</button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+        <div
+          className="flex gap-4 px-5 py-2 rounded-2xl text-xs"
+          style={{ background: "rgba(0,0,0,0.5)", color: "rgba(255,255,255,0.45)" }}
+        >
+          <span>✊ Pinch = place</span>
+          <span>🖐 Palm = delete</span>
+        </div>
+      </div>
     </div>
   );
 }
