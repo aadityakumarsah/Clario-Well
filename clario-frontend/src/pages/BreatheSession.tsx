@@ -19,84 +19,92 @@ type BreathPattern = {
 };
 
 const PATTERNS: Record<string, BreathPattern> = {
+  // 4-6: longer exhale activates parasympathetic (vagus nerve) to ease anxiety
   anxiety: {
     label: "Anxiety",
-    tagline: "Relax and breathe deeply",
+    tagline: "Calm your nervous system",
     color: "#7C6FAC",
     totalMinutes: 2,
     phases: [
-      { name: "inhale", duration: 4, text: "Inhale" },
-      { name: "exhale", duration: 8, text: "Exhale" },
+      { name: "inhale", duration: 4, text: "Breathe in" },
+      { name: "exhale", duration: 6, text: "Breathe out slowly" },
     ],
   },
+  // 4-8: doubled exhale cools the body and dissipates adrenaline
   anger: {
     label: "Anger",
     tagline: "Cool the fire within",
     color: "#A0688A",
     totalMinutes: 3,
     phases: [
-      { name: "inhale", duration: 4, text: "Inhale" },
-      { name: "exhale", duration: 6, text: "Exhale" },
+      { name: "inhale", duration: 4, text: "Breathe in deep" },
+      { name: "exhale", duration: 8, text: "Release it all out" },
     ],
   },
+  // 4-6: slightly faster than anger, calms the edge
   irritation: {
     label: "Irritation",
     tagline: "Soften the edge",
     color: "#5C8A7A",
     totalMinutes: 3,
     phases: [
-      { name: "inhale", duration: 4, text: "Inhale" },
-      { name: "exhale", duration: 6, text: "Exhale" },
+      { name: "inhale", duration: 4, text: "Breathe in" },
+      { name: "exhale", duration: 6, text: "Let it go" },
     ],
   },
+  // 4-5: gentle equal breathing — nurturing, not forced
   sadness: {
     label: "Sadness",
     tagline: "Let it move through",
     color: "#5A7FA8",
     totalMinutes: 3,
     phases: [
-      { name: "inhale", duration: 5, text: "Inhale" },
-      { name: "exhale", duration: 7, text: "Exhale slowly" },
+      { name: "inhale", duration: 4, text: "Breathe in gently" },
+      { name: "exhale", duration: 5, text: "Breathe out" },
     ],
   },
+  // 4-4: equal breathing — predictable rhythm grounds the mind during fear
   fear: {
     label: "Fear",
     tagline: "Ground yourself now",
     color: "#6A8A6A",
     totalMinutes: 3,
     phases: [
-      { name: "inhale", duration: 4, text: "Inhale" },
-      { name: "exhale", duration: 4, text: "Exhale" },
+      { name: "inhale", duration: 4, text: "Breathe in" },
+      { name: "exhale", duration: 4, text: "Breathe out" },
     ],
   },
+  // 4-7: long exhale releases chest tension tied to worry
   worry: {
     label: "Worry",
     tagline: "Release what you can't control",
     color: "#8A7A5A",
     totalMinutes: 4,
     phases: [
-      { name: "inhale", duration: 4, text: "Inhale" },
-      { name: "exhale", duration: 8, text: "Exhale" },
+      { name: "inhale", duration: 4, text: "Breathe in" },
+      { name: "exhale", duration: 7, text: "Release the worry" },
     ],
   },
+  // 4-4: centering equal breath — returns focus back to self
   envy: {
     label: "Envy",
     tagline: "Return to yourself",
     color: "#5A6A8A",
     totalMinutes: 3,
     phases: [
-      { name: "inhale", duration: 5, text: "Inhale" },
-      { name: "exhale", duration: 6, text: "Exhale" },
+      { name: "inhale", duration: 4, text: "Breathe in" },
+      { name: "exhale", duration: 4, text: "Breathe out" },
     ],
   },
+  // 4-6: steady rhythm breaks the stress cycle
   stress: {
     label: "Stress",
     tagline: "Let the tension go",
     color: "#7C6FAC",
     totalMinutes: 3,
     phases: [
-      { name: "inhale", duration: 4, text: "Inhale" },
-      { name: "exhale", duration: 6, text: "Exhale" },
+      { name: "inhale", duration: 4, text: "Breathe in" },
+      { name: "exhale", duration: 6, text: "Breathe out" },
     ],
   },
 };
@@ -163,6 +171,7 @@ export default function BreatheSession() {
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const elapsedRef = useRef(0);
   const phaseIdxRef = useRef(0);
+  const countdownRef = useRef(pattern.phases[0].duration); // mirrors countdown state for interval use
   const currentPhase = pattern.phases[phaseIdx];
 
   // ── Ambient audio ──────────────────────────────────────────────────────────
@@ -335,15 +344,28 @@ export default function BreatheSession() {
         return;
       }
 
-      setCountdown((prev) => {
-        if (prev <= 1) {
-          const next = (phaseIdxRef.current + 1) % pattern.phases.length;
-          phaseIdxRef.current = next;
-          setPhaseIdx(next);
-          return pattern.phases[next].duration;
+      const cur = countdownRef.current;
+      if (cur <= 1) {
+        // Phase transition
+        const next = (phaseIdxRef.current + 1) % pattern.phases.length;
+        phaseIdxRef.current = next;
+        const nextDur = pattern.phases[next].duration;
+        countdownRef.current = nextDur;
+        setPhaseIdx(next);
+        setCountdown(nextDur);
+      } else {
+        // Pre-cue: play inhale audio 2s before exhale ends so it doesn't feel late
+        if (cur === 2) {
+          const nextIdx = (phaseIdxRef.current + 1) % pattern.phases.length;
+          if (pattern.phases[nextIdx].name === "inhale") {
+            const a = inhaleAudioRef.current;
+            if (a) { a.currentTime = 0; a.play().catch(() => {}); }
+            skipFirstCueRef.current = true; // effect will skip — already playing
+          }
         }
-        return prev - 1;
-      });
+        countdownRef.current = cur - 1;
+        setCountdown(cur - 1);
+      }
     }, 1000);
 
     return () => clearInterval(timerRef.current!);
@@ -353,6 +375,7 @@ export default function BreatheSession() {
     if (timerRef.current) clearInterval(timerRef.current);
     phaseIdxRef.current = 0;
     elapsedRef.current = 0;
+    countdownRef.current = pattern.phases[0].duration;
     setPhaseIdx(0);
     setCountdown(pattern.phases[0].duration);
     setElapsed(0);
