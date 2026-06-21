@@ -201,8 +201,9 @@ export async function generateSessionReport(sessionId: string): Promise<SessionD
   const res = await fetch(`${BASE}/sessions/${encodeURIComponent(sessionId)}/report`, {
     method: "POST",
     headers: headers(),
-  });
+  }).catch((err) => { throw new Error(`Network error — is the backend running? (${err.message})`); });
+  if (!res.ok && res.status === 0) throw new Error("CORS blocked — add your Vercel URL to ALLOWED_ORIGINS on Render");
   const json = await safeJson(res);
-  if (!json.success) throw new Error(json.message ?? "Failed to generate report");
+  if (!json.success) throw new Error(json.message ?? `Server error ${res.status} — check Render logs`);
   return json.data as SessionDetailData;
 }
