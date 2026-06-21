@@ -50,12 +50,12 @@ const Dashboard = () => {
     clearReport,
   } = useVoiceJournal();
 
-  const { hasAccess, trialDaysLeft, loading: accessLoading } = useAccess();
+  const { isPremium, trialDaysLeft, loading: accessLoading } = useAccess();
   const { displayName } = useAuth();
   const navigate = useNavigate();
-  const isPaidUser = !accessLoading && hasAccess && trialDaysLeft === 0;
-  // Fail-closed: while loading treat as locked so users can't tap through during the check
-  const voiceLocked = accessLoading || !hasAccess || trialDaysLeft > 0;
+  const isPaidUser = !accessLoading && isPremium;
+  // Fail-closed: locked while loading OR when user hasn't paid (trial doesn't unlock voice)
+  const voiceLocked = accessLoading || !isPremium;
 
   const [pastCards, setPastCards] = useState<PastSessionCardModel[]>([]);
   const [pastSessionsLoading, setPastSessionsLoading] = useState(true);

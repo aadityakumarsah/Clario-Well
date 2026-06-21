@@ -10,10 +10,11 @@ interface Props {
 }
 
 export default function PremiumGate({ feature, icon, description, children }: Props) {
-  const { hasAccess, trialDaysLeft, loading } = useAccess();
+  const { isPremium, trialDaysLeft, loading } = useAccess();
   const navigate = useNavigate();
 
-  const locked = !loading && (!hasAccess || trialDaysLeft > 0);
+  // Fail-closed: locked while loading OR when user hasn't paid (trial doesn't unlock premium features)
+  const locked = loading || !isPremium;
 
   if (loading) {
     return (

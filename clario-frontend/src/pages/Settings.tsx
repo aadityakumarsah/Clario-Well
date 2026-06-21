@@ -12,7 +12,7 @@ import { getSettings, patchSettings } from "@/lib/api";
 import type { SettingsData } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAccess } from "@/hooks/useAccess";
-import { getSubscriptionStatus, createCheckoutSession } from "@/lib/subscription";
+import { createCheckoutSession } from "@/lib/subscription";
 import { isTrialActive, getTrialDaysLeft } from "@/lib/trial";
 import { supabase } from "@/lib/supabase";
 
@@ -60,8 +60,7 @@ const Settings = () => {
   const { t } = useTranslation();
   const [currentLang, setCurrentLang] = useState(i18n.language || "en");
   const { user, signOut } = useAuth();
-  const { trialDaysLeft } = useAccess();
-  const [subStatus, setSubStatus] = useState<{ active: boolean; plan: string | null } | null>(null);
+  const { isPremium, trialDaysLeft, plan: subPlan, expiresAt } = useAccess();
   const [upgradeLoading, setUpgradeLoading] = useState(false);
 
   // ── Profile editing state ──────────────────────────────────────────────────
@@ -131,11 +130,6 @@ const Settings = () => {
       setProfileSaving(false);
     }
   };
-
-  useEffect(() => {
-    if (!user) return;
-    getSubscriptionStatus().then(setSubStatus).catch(() => {});
-  }, [user]);
 
   const trialActive = isTrialActive(user?.created_at ?? null);
 
@@ -261,9 +255,9 @@ const Settings = () => {
                   </div>
                   <div className="flex items-center justify-between py-2 border-b border-border/40">
                     <p className="font-body text-sm text-muted-foreground">Status</p>
-                    {subStatus?.active ? (
+                    {isPremium ? (
                       <span className="text-xs font-semibold px-2.5 py-1 rounded-full" style={{ background: "#14532D", color: "#4ADE80" }}>
-                        {subStatus.plan ? subStatus.plan.charAt(0).toUpperCase() + subStatus.plan.slice(1) + " plan" : "Active"}
+                        {subPlan ? subPlan.charAt(0).toUpperCase() + subPlan.slice(1) + " plan" : "Premium"}
                       </span>
                     ) : trialActive ? (
                       <span className="text-xs font-semibold px-2.5 py-1 rounded-full" style={{ background: "#1E1040", color: "#A78BFA" }}>
@@ -275,6 +269,14 @@ const Settings = () => {
                       </span>
                     )}
                   </div>
+                  {isPremium && expiresAt && (
+                    <div className="flex items-center justify-between py-2 border-b border-border/40">
+                      <p className="font-body text-sm text-muted-foreground">Renews</p>
+                      <p className="font-body text-sm text-foreground">
+                        {new Date(expiresAt).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })}
+                      </p>
+                    </div>
+                  )}
                   <button
                     onClick={signOut}
                     className="flex items-center gap-2 text-sm font-body text-muted-foreground hover:text-red-400 transition-colors pt-1"
@@ -286,7 +288,7 @@ const Settings = () => {
               </motion.section>
 
               {/* ── Subscription section ── */}
-              {!subStatus?.active && (
+              {!isPremium && (
                 <motion.section
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
