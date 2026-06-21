@@ -170,7 +170,9 @@ export default function BreatheSession() {
   const [soundOn, setSoundOn] = useState(true);
 
   // ── Breath cue audio (inhale / exhale) ─────────────────────────────────────
-  const breathCueRef = useRef<HTMLAudioElement | null>(null);
+  // Two separate elements pre-created in the user-gesture tap so iOS allows play()
+  const inhaleAudioRef = useRef<HTMLAudioElement | null>(null);
+  const exhaleAudioRef = useRef<HTMLAudioElement | null>(null);
 
   // ── Voice guide (Gemini TTS) ────────────────────────────────────────────────
   const [voiceOn, setVoiceOn] = useState(false);
@@ -302,21 +304,19 @@ export default function BreatheSession() {
   }, [phaseIdx, running]);
 
   // ── Play inhale / exhale cue audio on phase change ─────────────────────────
+  // Elements are pre-unlocked in start() (user gesture), so play() works on iOS
   useEffect(() => {
     if (!running) return;
     const name = currentPhase.name;
-    if (name !== "inhale" && name !== "exhale") return;
-    const src = name === "inhale" ? "/breadth/deepbreadth.m4a" : "/breadth/exhale.m4a";
-
-    if (!breathCueRef.current) {
-      breathCueRef.current = new Audio();
+    if (name === "inhale") {
+      exhaleAudioRef.current?.pause();
+      const a = inhaleAudioRef.current;
+      if (a) { a.currentTime = 0; a.play().catch(() => {}); }
+    } else if (name === "exhale") {
+      inhaleAudioRef.current?.pause();
+      const a = exhaleAudioRef.current;
+      if (a) { a.currentTime = 0; a.play().catch(() => {}); }
     }
-    const cue = breathCueRef.current;
-    cue.pause();
-    cue.src = src;
-    cue.currentTime = 0;
-    cue.volume = 0.85;
-    cue.play().catch(() => {});
   }, [phaseIdx, running]);
 
   useEffect(() => {
@@ -356,6 +356,20 @@ export default function BreatheSession() {
     setElapsed(0);
     setDone(false);
     phaseSpring.set(PHASE_TARGET[pattern.phases[0].name]);
+
+    // Create + unlock both cue audio elements inside this user-gesture tap
+    // so iOS allows subsequent play() calls from useEffect
+    const inhale = new Audio("/breadth/deepbreadth.m4a");
+    inhale.volume = 0.85;
+    inhaleAudioRef.current = inhale;
+    inhale.play().catch(() => {}); // plays first inhale cue immediately
+
+    const exhale = new Audio("/breadth/exhale.m4a");
+    exhale.volume = 0.85;
+    exhaleAudioRef.current = exhale;
+    // pre-load exhale without playing (unlocked for later use)
+    exhale.load();
+
     setRunning(true);
   };
 
