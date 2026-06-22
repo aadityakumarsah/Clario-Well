@@ -3,21 +3,68 @@ import { useAuth } from "@/contexts/AuthContext";
 import { isTrialActive, getTrialDaysLeft } from "@/lib/trial";
 import { getSubscriptionStatus, SubscriptionStatus } from "@/lib/subscription";
 
-interface AccessState {
+// ─── Module-level cache ───────────────────────────────────────────────────────
+// Shared across all useAccess() instances so only one network call fires per page load.
+// Also backed by localStorage so the last known state loads instantly on refresh.
+
+const CACHE_KEY = "clario_sub";
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
+function readCache(): SubscriptionStatus | null {
+  try {
+    const raw = localStorage.getItem(CACHE_KEY);
+    if (!raw) return null;
+    const { data, ts } = JSON.parse(raw) as { data: SubscriptionStatus; ts: number };
+    if (Date.now() - ts > CACHE_TTL_MS) return null;
+    return data;
+  } catch { return null; }
+}
+
+function writeCache(s: SubscriptionStatus) {
+  try {
+    localStorage.setItem(CACHE_KEY, JSON.stringify({ data: s, ts: Date.now() }));
+  } catch {}
+}
+
+export function clearSubCache() {
+  try { localStorage.removeItem(CACHE_KEY); } catch {}
+}
+
+// In-flight promise shared across instances — prevents duplicate requests.
+let _inflight: Promise<SubscriptionStatus> | null = null;
+
+function fetchSub(): Promise<SubscriptionStatus> {
+  if (!_inflight) {
+    _inflight = getSubscriptionStatus()
+      .then((s) => { writeCache(s); return s; })
+      .catch(() => ({ active: false, plan: null, expires_at: null }))
+      .finally(() => { _inflight = null; });
+  }
+  return _inflight;
+}
+
+// ─── Hook ─────────────────────────────────────────────────────────────────────
+
+export interface AccessState {
   hasAccess: boolean;
-  isPremium: boolean;       // true only when a paid subscription is active
+  isPremium: boolean;
   trialDaysLeft: number;
-  plan: string | null;      // "weekly" | "monthly" | "yearly" | null
-  expiresAt: string | null; // ISO string of subscription end date
+  plan: string | null;
+  expiresAt: string | null;
   loading: boolean;
 }
 
 export function useAccess(): AccessState {
   const { user, loading: authLoading } = useAuth();
-  const [sub, setSub] = useState<SubscriptionStatus>({ active: false, plan: null, expires_at: null });
-  const [subLoading, setSubLoading] = useState(true);
 
-  const createdAt = user?.created_at ?? null;
+  const cached = readCache();
+  const [sub, setSub] = useState<SubscriptionStatus>(
+    cached ?? { active: false, plan: null, expires_at: null }
+  );
+  // If we have a valid cache hit: no loading state needed
+  const [subLoading, setSubLoading] = useState<boolean>(!cached);
+
+  const createdAt     = user?.created_at ?? null;
   const trialActive   = isTrialActive(createdAt);
   const trialDaysLeft = getTrialDaysLeft(createdAt);
 
@@ -25,20 +72,20 @@ export function useAccess(): AccessState {
     if (authLoading) return;
     if (!user) { setSubLoading(false); return; }
 
-    getSubscriptionStatus()
-      .then((s) => setSub(s))
-      .catch(() => setSub({ active: false, plan: null, expires_at: null }))
-      .finally(() => setSubLoading(false));
-  }, [user, authLoading]);
+    fetchSub().then((s) => {
+      setSub(s);
+      setSubLoading(false);
+    });
+  }, [user?.id, authLoading]);
 
   const isPremium = sub.active;
 
   return {
-    hasAccess: trialActive || isPremium,
+    hasAccess:    trialActive || isPremium,
     isPremium,
     trialDaysLeft,
-    plan: sub.plan,
-    expiresAt: sub.expires_at,
-    loading: authLoading || subLoading,
+    plan:         sub.plan,
+    expiresAt:    sub.expires_at,
+    loading:      authLoading || subLoading,
   };
 }

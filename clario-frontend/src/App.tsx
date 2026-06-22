@@ -33,7 +33,7 @@ const UNGUARDED_PATHS = ["/paywall", "/paywall/success"];
 
 function AppRoutes() {
   const location = useLocation();
-  const { hasAccess, trialDaysLeft, loading } = useAccess();
+  const { hasAccess, isPremium, trialDaysLeft, loading } = useAccess();
 
   const isUnguarded = UNGUARDED_PATHS.some((p) => location.pathname.startsWith(p));
 
@@ -53,7 +53,7 @@ function AppRoutes() {
   }
 
   const showBanner =
-    !loading && hasAccess && trialDaysLeft <= 2 && trialDaysLeft > 0 && !isUnguarded;
+    !loading && hasAccess && !isPremium && trialDaysLeft <= 2 && trialDaysLeft > 0 && !isUnguarded;
 
   return (
     <>
