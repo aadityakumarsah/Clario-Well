@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { syncSubscription } from "@/lib/subscription";
+import { clearSubCache } from "@/hooks/useAccess";
 
 export default function PaywallSuccess() {
   const navigate = useNavigate();
@@ -14,6 +15,7 @@ export default function PaywallSuccess() {
     if (!sessionId) { setSyncing(false); return; }
 
     syncSubscription(sessionId)
+      .then(() => clearSubCache())   // bust stale "active: false" cache so next page reads fresh
       .catch(() => setSyncError(true))
       .finally(() => setSyncing(false));
   }, []);

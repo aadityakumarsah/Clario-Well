@@ -159,13 +159,15 @@ def _handle_checkout_completed(session: dict) -> None:
         if secret_key:
             try:
                 client = stripe.StripeClient(secret_key)
-                sub = client.v1.subscriptions.retrieve(subscription_id)
-                status = sub.status
-                current_period_end = sub.current_period_end
-                # Derive plan from price metadata or interval
-                if sub.items and sub.items.data:
-                    price = sub.items.data[0].price
-                    interval = price.recurring.interval if price.recurring else None
+                sub_obj = client.v1.subscriptions.retrieve(subscription_id)
+                sub = sub_obj.to_dict() if hasattr(sub_obj, "to_dict") else dict(sub_obj)
+                status = sub.get("status", "active")
+                current_period_end = sub.get("current_period_end")
+                # Derive plan from price interval
+                items = sub.get("items", {}).get("data", [])
+                if items:
+                    price = items[0].get("price", {})
+                    interval = (price.get("recurring") or {}).get("interval")
                     if interval == "week":
                         plan = "weekly"
                     elif interval == "month":
@@ -260,11 +262,16 @@ def sync_subscription_from_session(
         logger.error("Failed to retrieve checkout session {}: {}", session_id, e)
         raise HTTPException(status_code=502, detail=str(e))
 
-    # Verify this session belongs to the logged-in user
-    session_obj = session if isinstance(session, dict) else session.__dict__
-    meta_user_id = (session_obj.get("metadata") or {}).get("user_id", "")
+    # Normalise to plain dict — Stripe v15 objects support to_dict()
+    session_dict = session.to_dict() if hasattr(session, "to_dict") else dict(session)
+
+    meta_user_id = (session_dict.get("metadata") or {}).get("user_id", "")
     if meta_user_id and meta_user_id != user["id"]:
         raise HTTPException(status_code=403, detail="Session does not belong to this user")
 
-    _handle_checkout_completed(session_obj)
+    # Stamp the user_id if missing (e.g. Stripe didn't echo metadata back)
+    if not meta_user_id:
+        session_dict.setdefault("metadata", {})["user_id"] = user["id"]
+
+    _handle_checkout_completed(session_dict)
     return {"synced": True}
