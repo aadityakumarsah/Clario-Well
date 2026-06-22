@@ -77,10 +77,15 @@ def create_checkout_session(
     existing = get_subscription(user_id)
     customer_id = existing.get("stripe_customer_id") if existing else None
 
+    # Append Stripe's session_id template so the success page can call /payments/sync
+    success_url = body.success_url
+    sep = "&" if "?" in success_url else "?"
+    success_url = f"{success_url}{sep}session_id={{CHECKOUT_SESSION_ID}}"
+
     session_params: dict = {
         "mode": "subscription",
         "line_items": [{"price": price_id, "quantity": 1}],
-        "success_url": body.success_url,
+        "success_url": success_url,
         "cancel_url": body.cancel_url,
         "metadata": {"user_id": user_id},
         "subscription_data": {"metadata": {"user_id": user_id}},
@@ -235,3 +240,31 @@ def get_subscription_status(user: dict = Depends(get_current_user)):
         plan=row.get("plan") if is_active else None,
         expires_at=expires_at,
     )
+
+
+@payments_router.post("/sync")
+def sync_subscription_from_session(
+    session_id: str,
+    user: dict = Depends(get_current_user),
+):
+    """Called from the success page to save the subscription immediately.
+    Fallback for when the Stripe webhook hasn't been configured yet.
+    """
+    if user.get("id") == "guest":
+        raise HTTPException(status_code=401, detail="Sign in to sync subscription")
+
+    client = _stripe_client()
+    try:
+        session = client.v1.checkout.sessions.retrieve(session_id)
+    except stripe.StripeError as e:
+        logger.error("Failed to retrieve checkout session {}: {}", session_id, e)
+        raise HTTPException(status_code=502, detail=str(e))
+
+    # Verify this session belongs to the logged-in user
+    session_obj = session if isinstance(session, dict) else session.__dict__
+    meta_user_id = (session_obj.get("metadata") or {}).get("user_id", "")
+    if meta_user_id and meta_user_id != user["id"]:
+        raise HTTPException(status_code=403, detail="Session does not belong to this user")
+
+    _handle_checkout_completed(session_obj)
+    return {"synced": True}

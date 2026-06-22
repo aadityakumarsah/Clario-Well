@@ -55,3 +55,11 @@ export async function createCheckoutSession(
   const data = await res.json();
   return data.url as string;
 }
+
+export async function syncSubscription(sessionId: string): Promise<void> {
+  if (!BASE) return;
+  await fetch(`${BASE}/payments/sync?session_id=${encodeURIComponent(sessionId)}`, {
+    method: "POST",
+    headers: await authHeaders(),
+  });
+}

@@ -1,8 +1,31 @@
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
+import { syncSubscription } from "@/lib/subscription";
 
 export default function PaywallSuccess() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const [syncing, setSyncing] = useState(true);
+  const [syncError, setSyncError] = useState(false);
+
+  useEffect(() => {
+    const sessionId = searchParams.get("session_id");
+    if (!sessionId) { setSyncing(false); return; }
+
+    syncSubscription(sessionId)
+      .catch(() => setSyncError(true))
+      .finally(() => setSyncing(false));
+  }, []);
+
+  if (syncing) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center gap-4" style={{ background: "#060F1E" }}>
+        <div className="w-7 h-7 border-2 border-purple-400 border-t-transparent rounded-full animate-spin" />
+        <p className="text-sm" style={{ color: "#94A3B8" }}>Activating your subscription…</p>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -15,23 +38,24 @@ export default function PaywallSuccess() {
         transition={{ duration: 0.5 }}
         className="text-center space-y-6 max-w-sm"
       >
-        {/* Icon */}
         <div
           className="mx-auto w-16 h-16 rounded-full flex items-center justify-center text-3xl"
           style={{ background: "rgba(124,58,237,0.18)", border: "1.5px solid #7C3AED" }}
         >
-          ✓
+          {syncError ? "⚠️" : "✓"}
         </div>
 
-        <h1 className="text-3xl font-bold text-white">You're all set!</h1>
+        <h1 className="text-3xl font-bold text-white">
+          {syncError ? "Payment received!" : "You're all set!"}
+        </h1>
 
         <p className="text-base" style={{ color: "#94A3B8" }}>
-          Welcome to{" "}
-          <span style={{ color: "#A78BFA" }} className="font-semibold">
-            Clario Premium
-          </span>
-          . Your subscription is now active — enjoy full access to all your
-          wellness tools.
+          {syncError
+            ? "Your payment went through but we couldn't activate instantly. Sign out and back in to refresh your access."
+            : <>Welcome to{" "}
+                <span style={{ color: "#A78BFA" }} className="font-semibold">Clario Premium</span>
+                . Your subscription is now active — enjoy full access to all your wellness tools.
+              </>}
         </p>
 
         <button
