@@ -10,6 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.routers import websocket_router, auth_router, settings_router, sessions_router, tts_router, relief_router, payments_router, avatar_router
 from app.core.database import init_db
 from app.db.subscriptions import init_subscriptions_table
+from app.services import voice_session as voice_session_service
 
 app = FastAPI()
 
@@ -17,6 +18,13 @@ app = FastAPI()
 def on_startup():
     init_db()
     init_subscriptions_table()
+    # Prune sessions (+ their conversation history) older than 10 days on every cold start.
+    # Render spins down free-tier instances between requests, so this runs frequently enough
+    # to stay within budget without a dedicated cron job.
+    removed = voice_session_service.cleanup_sessions_older_than(days=10)
+    if removed:
+        from loguru import logger
+        logger.info("Startup: pruned {} session(s) older than 10 days", removed)
 
 # Configure CORS based on environment
 _raw_origins = os.getenv(

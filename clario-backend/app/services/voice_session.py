@@ -114,3 +114,61 @@ def save_call_report(session_id: str, user_id: str, report: dict) -> bool:
     except Exception as e:
         logger.warning("save_call_report error: {}", e)
         return False
+
+
+def delete_session(session_id: str, user_id: str) -> bool:
+    """Delete a session and its conversation history for the given user."""
+    if not get_session_for_user(session_id, user_id):
+        logger.warning("delete_session: not found | session_id={}", session_id)
+        return False
+    try:
+        conn = get_conn()
+        # SQLite schema has no FK cascade — delete child rows first
+        conn.execute(
+            "DELETE FROM conversation_history WHERE session_id = ? AND user_id = ?",
+            (session_id, user_id),
+        )
+        conn.execute(
+            "DELETE FROM voice_sessions WHERE session_id = ? AND user_id = ?",
+            (session_id, user_id),
+        )
+        conn.commit()
+        logger.info("delete_session: removed session_id={}", session_id)
+        return True
+    except Exception as e:
+        logger.warning("delete_session error: {}", e)
+        return False
+
+
+def cleanup_sessions_older_than(days: int = 10) -> int:
+    """Delete all sessions (and their conversation history) created more than `days` ago.
+
+    Called once at startup so old data is pruned without needing a separate cron job.
+    Returns the number of sessions removed.
+    """
+    cutoff = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
+    try:
+        conn = get_conn()
+        old_rows = conn.execute(
+            "SELECT session_id FROM voice_sessions WHERE created_at < ?",
+            (cutoff,),
+        ).fetchall()
+        if not old_rows:
+            return 0
+        ids = [r["session_id"] for r in old_rows]
+        placeholders = ",".join("?" * len(ids))
+        conn.execute(
+            f"DELETE FROM conversation_history WHERE session_id IN ({placeholders})", ids
+        )
+        conn.execute(
+            f"DELETE FROM voice_sessions WHERE session_id IN ({placeholders})", ids
+        )
+        conn.commit()
+        logger.info(
+            "cleanup_sessions_older_than({}d): removed {} sessions (cutoff={})",
+            days, len(ids), cutoff,
+        )
+        return len(ids)
+    except Exception as e:
+        logger.warning("cleanup_sessions_older_than error: {}", e)
+        return 0

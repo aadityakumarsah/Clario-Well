@@ -72,6 +72,21 @@ def get_session(session_id: UUID, user: dict = Depends(get_current_user)):
     return ok("OK", detail)
 
 
+@sessions_router.delete(
+    "/{session_id}",
+    response_model=ApiResponse[dict],
+)
+def delete_session(session_id: UUID, user: dict = Depends(get_current_user)):
+    """Delete a session and all its conversation history."""
+    user_id = user.get("id")
+    sid = str(session_id)
+    logger.info("DELETE /sessions/{} for user {}", sid, user_id)
+    deleted = voice_session_service.delete_session(sid, user_id)
+    if not deleted:
+        return fail("Session not found or already deleted")
+    return ok("Session deleted", {})
+
+
 @sessions_router.post(
     "/{session_id}/report",
     response_model=ApiResponse[SessionDetailData],
