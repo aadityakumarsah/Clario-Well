@@ -9,7 +9,7 @@ import hashlib
 import time
 import httpx
 
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, status
+from fastapi import APIRouter, Depends, Form, HTTPException, UploadFile, File, status
 from pydantic import BaseModel
 from typing import Optional
 
@@ -58,7 +58,7 @@ class AvatarUploadResponse(BaseModel):
 @avatar_router.post("/upload", response_model=AvatarUploadResponse)
 async def upload_avatar(
     file: UploadFile = File(...),
-    old_public_id: Optional[str] = None,
+    old_public_id: Optional[str] = Form(None),
     current_user: dict = Depends(get_current_user),
 ):
     if not settings.CLOUDINARY_CLOUD_NAME or not settings.CLOUDINARY_API_SECRET:
