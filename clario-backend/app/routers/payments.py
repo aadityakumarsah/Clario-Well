@@ -45,6 +45,7 @@ class SubscriptionStatusResponse(BaseModel):
     active: bool
     plan: str | None
     expires_at: str | None
+    started_at: str | None
 
 
 # ── Endpoints ─────────────────────────────────────────────────────────────────
@@ -111,9 +112,14 @@ async def stripe_webhook(
 ):
     """Stripe sends events here — NOT protected by JWT."""
     webhook_secret = os.getenv("STRIPE_WEBHOOK_SECRET", "")
+    # Allow skipping verification only when explicitly opted in for local dev
+    skip_verification = os.getenv("STRIPE_SKIP_WEBHOOK_VERIFICATION", "").lower() == "true"
     payload = await request.body()
 
-    if webhook_secret and stripe_signature:
+    if webhook_secret:
+        if not stripe_signature:
+            logger.warning("Stripe webhook received without signature header")
+            raise HTTPException(status_code=400, detail="Missing stripe-signature header")
         try:
             event = stripe.Webhook.construct_event(
                 payload, stripe_signature, webhook_secret
@@ -121,11 +127,14 @@ async def stripe_webhook(
         except stripe.SignatureVerificationError as e:
             logger.warning("Stripe webhook signature verification failed: {}", e)
             raise HTTPException(status_code=400, detail="Invalid signature")
-    else:
-        # Accept unsigned in dev if no secret configured (log a warning)
-        logger.warning("STRIPE_WEBHOOK_SECRET not set — skipping signature check")
+    elif skip_verification:
+        logger.warning("STRIPE_SKIP_WEBHOOK_VERIFICATION=true — skipping signature check (dev only)")
         import json
         event = json.loads(payload)
+    else:
+        # No secret configured and skip not set — reject to prevent fake events
+        logger.error("STRIPE_WEBHOOK_SECRET not set. Set it or STRIPE_SKIP_WEBHOOK_VERIFICATION=true for local dev.")
+        raise HTTPException(status_code=500, detail="Webhook not configured")
 
     event_type = event["type"] if isinstance(event, dict) else event.type
     data_obj = event["data"]["object"] if isinstance(event, dict) else event.data.object
@@ -136,6 +145,10 @@ async def stripe_webhook(
         _handle_checkout_completed(data_obj)
     elif event_type in ("customer.subscription.deleted", "customer.subscription.updated"):
         _handle_subscription_change(data_obj)
+    elif event_type == "invoice.payment_succeeded":
+        _handle_invoice_payment_succeeded(data_obj)
+    elif event_type == "invoice.payment_failed":
+        _handle_invoice_payment_failed(data_obj)
 
     return {"received": True}
 
@@ -149,9 +162,9 @@ def _handle_checkout_completed(session: dict) -> None:
     customer_id = session.get("customer")
     subscription_id = session.get("subscription")
 
-    # Fetch subscription details to get period end and plan
     plan = None
     current_period_end = None
+    started_at = None
     status = "active"
 
     if subscription_id:
@@ -163,7 +176,7 @@ def _handle_checkout_completed(session: dict) -> None:
                 sub = sub_obj.to_dict() if hasattr(sub_obj, "to_dict") else dict(sub_obj)
                 status = sub.get("status", "active")
                 current_period_end = sub.get("current_period_end")
-                # Derive plan from price interval
+                started_at = sub.get("start_date")  # Unix ts of when subscription started
                 items = sub.get("items", {}).get("data", [])
                 if items:
                     price = items[0].get("price", {})
@@ -184,13 +197,13 @@ def _handle_checkout_completed(session: dict) -> None:
         plan=plan,
         status=status,
         current_period_end=current_period_end,
+        started_at=started_at,
     )
     logger.info("Subscription activated for user {}: plan={}", user_id, plan)
 
 
 def _handle_subscription_change(subscription: dict) -> None:
     """Handle subscription updates/cancellations."""
-    user_id = None
     if isinstance(subscription, dict):
         user_id = subscription.get("metadata", {}).get("user_id")
         sub_id = subscription.get("id")
@@ -203,7 +216,6 @@ def _handle_subscription_change(subscription: dict) -> None:
         current_period_end = subscription.current_period_end
 
     if not user_id:
-        # Try to find user by subscription ID
         logger.warning("subscription event missing user_id in metadata, sub_id={}", sub_id)
         return
 
@@ -216,13 +228,77 @@ def _handle_subscription_change(subscription: dict) -> None:
     logger.info("Subscription updated for user {}: status={}", user_id, status)
 
 
+def _handle_invoice_payment_succeeded(invoice: dict) -> None:
+    """Refresh current_period_end when a renewal charge succeeds."""
+    if isinstance(invoice, dict):
+        subscription_id = invoice.get("subscription")
+        customer_id = invoice.get("customer")
+    else:
+        subscription_id = invoice.subscription
+        customer_id = invoice.customer
+
+    if not subscription_id:
+        return
+
+    # Look up user_id by stripe_subscription_id
+    from app.db.subscriptions import get_subscription_by_stripe_sub_id
+    row = get_subscription_by_stripe_sub_id(subscription_id)
+    if not row:
+        logger.info("invoice.payment_succeeded — no matching subscription row for {}", subscription_id)
+        return
+
+    # Fetch fresh period_end from Stripe
+    secret_key = os.getenv("STRIPE_SECRET_KEY", "")
+    if not secret_key:
+        return
+    try:
+        client = stripe.StripeClient(secret_key)
+        sub_obj = client.v1.subscriptions.retrieve(subscription_id)
+        sub = sub_obj.to_dict() if hasattr(sub_obj, "to_dict") else dict(sub_obj)
+        current_period_end = sub.get("current_period_end")
+        status = sub.get("status", "active")
+    except Exception as e:
+        logger.error("Failed to retrieve subscription {} for renewal: {}", subscription_id, e)
+        return
+
+    upsert_subscription(
+        user_id=row["user_id"],
+        status=status,
+        current_period_end=current_period_end,
+    )
+    logger.info("Subscription renewed for user {}: period_end={}", row["user_id"], current_period_end)
+
+
+def _handle_invoice_payment_failed(invoice: dict) -> None:
+    """Mark subscription past_due when a renewal charge fails."""
+    if isinstance(invoice, dict):
+        subscription_id = invoice.get("subscription")
+    else:
+        subscription_id = invoice.subscription
+
+    if not subscription_id:
+        return
+
+    from app.db.subscriptions import get_subscription_by_stripe_sub_id
+    row = get_subscription_by_stripe_sub_id(subscription_id)
+    if not row:
+        logger.info("invoice.payment_failed — no matching subscription row for {}", subscription_id)
+        return
+
+    upsert_subscription(
+        user_id=row["user_id"],
+        status="past_due",
+    )
+    logger.warning("Subscription payment failed for user {} — marked past_due", row["user_id"])
+
+
 @payments_router.get("/status", response_model=SubscriptionStatusResponse)
 def get_subscription_status(user: dict = Depends(get_current_user)):
     user_id = user["id"]
     row = get_subscription(user_id)
 
     if not row:
-        return SubscriptionStatusResponse(active=False, plan=None, expires_at=None)
+        return SubscriptionStatusResponse(active=False, plan=None, expires_at=None, started_at=None)
 
     status = row.get("status", "")
     current_period_end = row.get("current_period_end")
@@ -237,10 +313,20 @@ def get_subscription_status(user: dict = Depends(get_current_user)):
     if current_period_end:
         expires_at = datetime.fromtimestamp(current_period_end, tz=timezone.utc).isoformat()
 
+    # started_at: prefer explicit column, fall back to created_at
+    started_at_raw = row.get("started_at") or row.get("created_at")
+    started_at = None
+    if started_at_raw:
+        if isinstance(started_at_raw, (int, float)):
+            started_at = datetime.fromtimestamp(started_at_raw, tz=timezone.utc).isoformat()
+        else:
+            started_at = str(started_at_raw)
+
     return SubscriptionStatusResponse(
         active=is_active,
         plan=row.get("plan") if is_active else None,
         expires_at=expires_at,
+        started_at=started_at if is_active else None,
     )
 
 
@@ -250,7 +336,7 @@ def sync_subscription_from_session(
     user: dict = Depends(get_current_user),
 ):
     """Called from the success page to save the subscription immediately.
-    Fallback for when the Stripe webhook hasn't been configured yet.
+    Fallback for when the Stripe webhook hasn't fired yet.
     """
     if user.get("id") == "guest":
         raise HTTPException(status_code=401, detail="Sign in to sync subscription")
@@ -262,16 +348,15 @@ def sync_subscription_from_session(
         logger.error("Failed to retrieve checkout session {}: {}", session_id, e)
         raise HTTPException(status_code=502, detail=str(e))
 
-    # Normalise to plain dict — Stripe v15 objects support to_dict()
     session_dict = session.to_dict() if hasattr(session, "to_dict") else dict(session)
 
     meta_user_id = (session_dict.get("metadata") or {}).get("user_id", "")
-    if meta_user_id and meta_user_id != user["id"]:
-        raise HTTPException(status_code=403, detail="Session does not belong to this user")
 
-    # Stamp the user_id if missing (e.g. Stripe didn't echo metadata back)
+    # Always require metadata user_id to match the authenticated user
     if not meta_user_id:
-        session_dict.setdefault("metadata", {})["user_id"] = user["id"]
+        raise HTTPException(status_code=403, detail="Session has no user_id in metadata")
+    if meta_user_id != user["id"]:
+        raise HTTPException(status_code=403, detail="Session does not belong to this user")
 
     _handle_checkout_completed(session_dict)
     return {"synced": True}
