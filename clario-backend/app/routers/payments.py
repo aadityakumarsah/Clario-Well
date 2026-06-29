@@ -39,6 +39,7 @@ class CheckoutRequest(BaseModel):
 
 class CheckoutResponse(BaseModel):
     url: str
+    session_id: str
 
 
 class SubscriptionStatusResponse(BaseModel):
@@ -102,7 +103,7 @@ def create_checkout_session(
         logger.error("Stripe error creating checkout session: {}", e)
         raise HTTPException(status_code=502, detail=str(e))
 
-    return CheckoutResponse(url=session.url)
+    return CheckoutResponse(url=session.url, session_id=session.id)
 
 
 @payments_router.post("/webhook")
@@ -328,6 +329,75 @@ def get_subscription_status(user: dict = Depends(get_current_user)):
         expires_at=expires_at,
         started_at=started_at if is_active else None,
     )
+
+
+@payments_router.get("/checkout-return")
+def checkout_return(session_id: str):
+    """
+    Stripe redirects here after successful checkout (HTTPS required by Stripe).
+    Returns an HTML page that JS-navigates to the app deep link — more reliable
+    than a 302 to a custom scheme, which Safari often rejects.
+    """
+    from fastapi.responses import HTMLResponse
+    deep_link = f"clariomobile://paywall/success?session_id={session_id}"
+    html = f"""<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Redirecting to Clario…</title>
+  <style>
+    body {{ font-family: -apple-system, sans-serif; display: flex; flex-direction: column;
+           align-items: center; justify-content: center; min-height: 100vh; margin: 0;
+           background: #FAF7F2; color: #3A2E2A; text-align: center; padding: 24px; box-sizing: border-box; }}
+    h1 {{ font-size: 22px; margin-bottom: 8px; }}
+    p  {{ font-size: 14px; color: #6B5E57; margin-bottom: 32px; }}
+    a  {{ background: #3A2E2A; color: #FAF7F2; text-decoration: none;
+          padding: 14px 32px; border-radius: 14px; font-size: 15px; font-weight: 600; }}
+  </style>
+</head>
+<body>
+  <h1>Payment successful!</h1>
+  <p>Opening Clario…</p>
+  <a href="{deep_link}">Open Clario</a>
+  <script>
+    // Try to open the app immediately; show the button as fallback
+    window.location.href = "{deep_link}";
+  </script>
+</body>
+</html>"""
+    return HTMLResponse(content=html)
+
+
+@payments_router.get("/checkout-cancel")
+def checkout_cancel():
+    """Stripe redirects here on cancel — shows a page that bounces back to paywall."""
+    from fastapi.responses import HTMLResponse
+    deep_link = "clariomobile://paywall"
+    html = """<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Payment cancelled</title>
+  <style>
+    body { font-family: -apple-system, sans-serif; display: flex; flex-direction: column;
+           align-items: center; justify-content: center; min-height: 100vh; margin: 0;
+           background: #FAF7F2; color: #3A2E2A; text-align: center; padding: 24px; box-sizing: border-box; }
+    h1 { font-size: 22px; margin-bottom: 8px; }
+    p  { font-size: 14px; color: #6B5E57; margin-bottom: 32px; }
+    a  { background: #3A2E2A; color: #FAF7F2; text-decoration: none;
+          padding: 14px 32px; border-radius: 14px; font-size: 15px; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <h1>Payment cancelled</h1>
+  <p>No charge was made. Tap below to return to the app.</p>
+  <a href="clariomobile://paywall">Return to Clario</a>
+  <script>window.location.href = "clariomobile://paywall";</script>
+</body>
+</html>"""
+    return HTMLResponse(content=html)
 
 
 @payments_router.post("/sync")

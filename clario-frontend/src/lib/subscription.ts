@@ -58,8 +58,21 @@ export async function createCheckoutSession(
 
 export async function syncSubscription(sessionId: string): Promise<void> {
   if (!BASE) return;
-  await fetch(`${BASE}/payments/sync?session_id=${encodeURIComponent(sessionId)}`, {
-    method: "POST",
-    headers: await authHeaders(),
-  });
+  // Retry up to 3 times with backoff — backend may be cold-starting on Render.
+  let lastErr: unknown;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    if (attempt > 0) await new Promise(r => setTimeout(r, attempt * 3000));
+    try {
+      const res = await fetch(
+        `${BASE}/payments/sync?session_id=${encodeURIComponent(sessionId)}`,
+        { method: "POST", headers: await authHeaders() }
+      );
+      if (res.ok) return;
+      const body = await res.json().catch(() => ({}));
+      lastErr = new Error(body.detail ?? `Sync failed (${res.status})`);
+    } catch (e) {
+      lastErr = e;
+    }
+  }
+  throw lastErr;
 }

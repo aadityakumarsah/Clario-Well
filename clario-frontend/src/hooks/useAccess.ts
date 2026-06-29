@@ -20,7 +20,7 @@ function readCache(): SubscriptionStatus | null {
   } catch { return null; }
 }
 
-function writeCache(s: SubscriptionStatus) {
+export function writeCache(s: SubscriptionStatus) {
   try {
     localStorage.setItem(CACHE_KEY, JSON.stringify({ data: s, ts: Date.now() }));
   } catch {}
@@ -28,6 +28,7 @@ function writeCache(s: SubscriptionStatus) {
 
 export function clearSubCache() {
   try { localStorage.removeItem(CACHE_KEY); } catch {}
+  _inflight = null; // force next fetchSub() to make a fresh network request
 }
 
 // In-flight promise shared across instances — prevents duplicate requests.

@@ -59,5 +59,9 @@ app.include_router(daily_checks_router)
 def read_root():
     return {"message": "Clario Backend!"}
 
+@app.get("/health", tags=['Root'])
+def health_check():
+    return {"status": "ok"}
+
 
 
