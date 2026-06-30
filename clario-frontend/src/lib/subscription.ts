@@ -31,11 +31,18 @@ export async function getSubscriptionStatus(): Promise<SubscriptionStatus> {
   }
 }
 
+class NoRetryError extends Error {
+  constructor(msg: string) { super(msg); this.name = "NoRetryError"; }
+}
+
 async function withRetry<T>(fn: () => Promise<T>, attempts = 8, delayMs = 6000): Promise<T> {
   let lastErr: unknown;
   for (let i = 0; i < attempts; i++) {
     if (i > 0) await new Promise(r => setTimeout(r, delayMs));
-    try { return await fn(); } catch (e) { lastErr = e; }
+    try { return await fn(); } catch (e) {
+      if (e instanceof NoRetryError) throw e; // don't retry auth/config errors
+      lastErr = e;
+    }
   }
   throw lastErr;
 }
@@ -59,7 +66,12 @@ export async function createCheckoutSession(
 
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw new Error(err.detail ?? `Failed to create checkout session (${res.status})`);
+      const msg = err.detail ?? `Failed to create checkout session (${res.status})`;
+      // 4xx errors (except 429 Too Many Requests and 503) won't be fixed by retrying
+      if (res.status >= 400 && res.status < 500 && res.status !== 429) {
+        throw new NoRetryError(msg);
+      }
+      throw new Error(msg);
     }
 
     const data = await res.json();
