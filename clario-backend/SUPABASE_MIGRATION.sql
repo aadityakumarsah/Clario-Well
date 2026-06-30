@@ -6,8 +6,12 @@ create table if not exists subscriptions (
   stripe_subscription_id text,
   plan                text,         -- 'weekly' | 'monthly' | 'yearly'
   status              text,         -- 'active' | 'trialing' | 'canceled' | 'past_due'
-  current_period_end  bigint        -- Unix timestamp (seconds)
+  current_period_end  bigint,       -- Unix timestamp (seconds)
+  started_at          bigint        -- Unix timestamp (seconds)
 );
+
+-- If table already exists, add started_at column if missing:
+alter table subscriptions add column if not exists started_at bigint;
 
 -- Row-level security: users can only read their own row
 alter table subscriptions enable row level security;

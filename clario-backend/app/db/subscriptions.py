@@ -153,9 +153,8 @@ def _sqlite_upsert(user_id: str, **fields) -> None:
 # ── Public API ────────────────────────────────────────────────────────────────
 
 def init_subscriptions_table() -> None:
-    """Only needed for SQLite; Supabase tables are created via SQL migration."""
-    if _supa() is None:
-        _sqlite_init()
+    """Always initialise the SQLite table so the Supabase fallback never crashes."""
+    _sqlite_init()
 
 
 def get_subscription(user_id: str) -> dict | None:
