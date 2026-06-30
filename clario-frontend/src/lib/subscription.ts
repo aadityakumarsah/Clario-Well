@@ -31,29 +31,40 @@ export async function getSubscriptionStatus(): Promise<SubscriptionStatus> {
   }
 }
 
+async function withRetry<T>(fn: () => Promise<T>, attempts = 3, delayMs = 4000): Promise<T> {
+  let lastErr: unknown;
+  for (let i = 0; i < attempts; i++) {
+    if (i > 0) await new Promise(r => setTimeout(r, delayMs));
+    try { return await fn(); } catch (e) { lastErr = e; }
+  }
+  throw lastErr;
+}
+
 export async function createCheckoutSession(
   plan: "weekly" | "monthly" | "yearly"
 ): Promise<string> {
   if (!BASE) throw new Error("Backend URL not configured");
 
   const origin = window.location.origin;
-  const res = await fetch(`${BASE}/payments/create-checkout-session`, {
-    method: "POST",
-    headers: await authHeaders(),
-    body: JSON.stringify({
-      plan,
-      success_url: `${origin}/paywall/success`,
-      cancel_url: `${origin}/paywall`,
-    }),
+  return withRetry(async () => {
+    const res = await fetch(`${BASE}/payments/create-checkout-session`, {
+      method: "POST",
+      headers: await authHeaders(),
+      body: JSON.stringify({
+        plan,
+        success_url: `${origin}/paywall/success`,
+        cancel_url: `${origin}/paywall`,
+      }),
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail ?? `Failed to create checkout session (${res.status})`);
+    }
+
+    const data = await res.json();
+    return data.url as string;
   });
-
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.detail ?? `Failed to create checkout session (${res.status})`);
-  }
-
-  const data = await res.json();
-  return data.url as string;
 }
 
 export async function syncSubscription(sessionId: string): Promise<void> {

@@ -193,10 +193,10 @@ function PlanCards() {
       window.location.href = url;
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Something went wrong";
-      const isFetch = msg.toLowerCase().includes("fetch") || msg.toLowerCase().includes("network");
+      const isFetch = msg.toLowerCase().includes("fetch") || msg.toLowerCase().includes("network") || msg.toLowerCase().includes("backend url");
       setError(
         isFetch
-          ? "Could not reach the server. The backend may be waking up — wait a few seconds and try again."
+          ? "The server took too long to respond. Please tap your plan again — it usually works on the second try."
           : msg
       );
       setLoadingPlan(null);
