@@ -134,7 +134,7 @@ def create_checkout_session(
 
     try:
         resp = httpx.post(
-            f"{_dodo_base()}/checkout-sessions",
+            f"{_dodo_base()}/checkouts",
             headers=_dodo_headers(),
             json=payload,
             timeout=30,
