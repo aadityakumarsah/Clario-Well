@@ -42,7 +42,7 @@ def _dodo_headers() -> dict:
 
 def _product_ids() -> dict[str, str]:
     return {
-        "weekly":  os.getenv("DODO_PRODUCT_WEEKLY",  "pdt_0NiAXvN7vcS31vtjnOlZx"),
+        "weekly":  os.getenv("DODO_PRODUCT_WEEKLY",  "pdt_0NiAXvN7vcS31vtjnOIZx"),
         "monthly": os.getenv("DODO_PRODUCT_MONTHLY", "pdt_0NiAY0OPAdfxMC6MY7yoU"),
         "yearly":  os.getenv("DODO_PRODUCT_YEARLY",  "pdt_0NiAY68nBNPhmCDwZTWLS"),
     }
