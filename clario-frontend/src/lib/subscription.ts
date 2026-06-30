@@ -67,10 +67,10 @@ export async function createCheckoutSession(
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
       const msg = err.detail ?? `Failed to create checkout session (${res.status})`;
-      // 4xx errors (except 429 Too Many Requests and 503) won't be fixed by retrying
-      if (res.status >= 400 && res.status < 500 && res.status !== 429) {
-        throw new NoRetryError(msg);
-      }
+      // Don't retry: 4xx (except 429), or 502 from payment provider (config error, not server sleep)
+      const noRetry = (res.status >= 400 && res.status < 500 && res.status !== 429)
+        || (res.status === 502 && msg.toLowerCase().includes("payment provider"));
+      if (noRetry) throw new NoRetryError(msg);
       throw new Error(msg);
     }
 
