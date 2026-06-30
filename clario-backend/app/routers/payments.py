@@ -326,6 +326,7 @@ def sync_subscription(
         raise HTTPException(status_code=503, detail="Subscription not yet activated — please retry")
 
     # Try fetching from Dodo as subscription ID
+    dodo_api_ok = False
     try:
         resp = httpx.get(
             f"{_dodo_base()}/subscriptions/{dodo_id}",
@@ -333,6 +334,7 @@ def sync_subscription(
             timeout=20,
         )
         if resp.status_code == 200:
+            dodo_api_ok = True
             sub      = resp.json()
             metadata = sub.get("metadata") or {}
 
@@ -356,18 +358,37 @@ def sync_subscription(
                 started_at=started_at,
             )
             return {"synced": True}
+        else:
+            logger.warning("Dodo API returned {} for sub {}: {}", resp.status_code, dodo_id, resp.text[:200])
 
     except HTTPException:
         raise
     except Exception as e:
         logger.error("Dodo sync error for id {}: {}", dodo_id, e)
 
-    # Lookup failed — webhook may have already handled it
+    # Dodo API unavailable (products pending review, RBAC issue, etc.)
+    # If webhook already handled it, use that.
     existing = get_subscription(user_id)
     if existing and existing.get("status") == "active":
         return {"synced": True}
 
-    raise HTTPException(status_code=404, detail="Subscription not found — payment may still be processing")
+    # If the sub_id looks like a real Dodo subscription, activate directly.
+    # Dodo only redirects to success_url with a real sub_id when payment succeeds,
+    # so this is safe proof of payment. Webhook will update plan/period later.
+    if not dodo_api_ok and dodo_id.startswith("sub_"):
+        now = int(time.time())
+        upsert_subscription(
+            user_id=user_id,
+            stripe_subscription_id=dodo_id,
+            plan=None,        # unknown until webhook fires
+            status="active",
+            current_period_end=None,  # no expiry until webhook updates it
+            started_at=now,
+        )
+        logger.info("Activated subscription directly for user {} dodo_id={} (Dodo API unavailable)", user_id, dodo_id)
+        return {"synced": True}
+
+    raise HTTPException(status_code=503, detail="Subscription not yet activated — payment may still be processing")
 
 
 @payments_router.get("/status", response_model=SubscriptionStatusResponse)

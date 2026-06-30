@@ -35,9 +35,11 @@ export default function PaywallSuccess() {
       setState("error");
     } catch (err) {
       console.error("Sync failed:", err);
-      // If Dodo URL says active, show done anyway — webhook will have activated it
       if (dodoStatus === "active") {
+        // Dodo redirect confirms payment — write optimistic active status so the
+        // app doesn't bounce back to paywall before the DB catches up
         clearSubCache();
+        writeCache({ active: true, plan: null, expires_at: null });
         setState("done");
         return;
       }
