@@ -183,23 +183,27 @@ function AuthForm() {
 
 function PlanCards() {
   const [loadingPlan, setLoadingPlan] = useState<Plan | null>(null);
+  const [wakingUp, setWakingUp] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleSelect = async (plan: Plan) => {
     setLoadingPlan(plan);
+    setWakingUp(false);
     setError(null);
+
+    // Show "waking up server" message after 5s if still loading
+    const wakeTimer = setTimeout(() => setWakingUp(true), 5000);
     try {
       const url = await createCheckoutSession(plan);
+      clearTimeout(wakeTimer);
       window.location.href = url;
     } catch (err: unknown) {
+      clearTimeout(wakeTimer);
       const msg = err instanceof Error ? err.message : "Something went wrong";
       const isFetch = msg.toLowerCase().includes("fetch") || msg.toLowerCase().includes("network") || msg.toLowerCase().includes("backend url");
-      setError(
-        isFetch
-          ? "The server took too long to respond. Please tap your plan again — it usually works on the second try."
-          : msg
-      );
+      setError(isFetch ? "Server is still starting. Please try again in a moment." : msg);
       setLoadingPlan(null);
+      setWakingUp(false);
     }
   };
 
@@ -258,11 +262,17 @@ function PlanCards() {
                 color: plan.highlight ? "#fff" : "#94A3B8",
               }}
             >
-              {loadingPlan === plan.id ? "Redirecting…" : "Get started"}
+              {loadingPlan === plan.id ? (wakingUp ? "Waking server…" : "Please wait…") : "Get started"}
             </span>
           </button>
         ))}
       </div>
+
+      {wakingUp && !error && (
+        <p className="text-xs text-center animate-pulse" style={{ color: "#A78BFA" }}>
+          Server is starting up — this takes up to 30 seconds, please wait…
+        </p>
+      )}
 
       {error && (
         <div className="flex flex-col items-center gap-2">

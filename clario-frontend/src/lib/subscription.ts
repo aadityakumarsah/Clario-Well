@@ -31,7 +31,7 @@ export async function getSubscriptionStatus(): Promise<SubscriptionStatus> {
   }
 }
 
-async function withRetry<T>(fn: () => Promise<T>, attempts = 3, delayMs = 4000): Promise<T> {
+async function withRetry<T>(fn: () => Promise<T>, attempts = 8, delayMs = 6000): Promise<T> {
   let lastErr: unknown;
   for (let i = 0; i < attempts; i++) {
     if (i > 0) await new Promise(r => setTimeout(r, delayMs));
