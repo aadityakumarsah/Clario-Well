@@ -12,24 +12,38 @@ export default function PaywallSuccess() {
   const [state, setState] = useState<State>("syncing");
   const [attempt, setAttempt] = useState(0);
 
-  // Dodo Payments appends ?subscription_id=...; legacy Stripe used session_id
+  // Dodo Payments appends ?subscription_id=...&status=active; legacy Stripe used session_id
   const sessionId = searchParams.get("subscription_id") ?? searchParams.get("session_id");
+  const dodoStatus = searchParams.get("status"); // "active" when Dodo confirms payment
 
   const doSync = useCallback(async () => {
-    if (!sessionId) { setState("done"); return; }
     setState("syncing");
     try {
-      await syncSubscription(sessionId); // already retries 8×6s internally
+      // Try sync — pass subscription_id if we have it
+      if (sessionId) {
+        await syncSubscription(sessionId);
+      }
       clearSubCache();
       const fresh = await getSubscriptionStatus();
       writeCache(fresh);
-      setState("done");
+      // If Dodo told us payment is active OR our DB confirms it, we're done
+      if (fresh.active || dodoStatus === "active") {
+        setState("done");
+        return;
+      }
+      // Subscription not active yet — treat as error so user can retry
+      setState("error");
     } catch (err) {
-      // syncSubscription exhausted all retries — show error with the reason
       console.error("Sync failed:", err);
+      // If Dodo URL says active, show done anyway — webhook will have activated it
+      if (dodoStatus === "active") {
+        clearSubCache();
+        setState("done");
+        return;
+      }
       setState("error");
     }
-  }, [sessionId, attempt]);
+  }, [sessionId, dodoStatus, attempt]);
 
   // Auto-retry once after 8s if the first attempt fails (catches brief server hiccups)
   useEffect(() => {
