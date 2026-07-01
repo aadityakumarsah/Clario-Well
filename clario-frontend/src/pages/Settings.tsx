@@ -256,15 +256,15 @@ const Settings = () => {
                   <div className="flex items-center justify-between py-2 border-b border-border/40">
                     <p className="font-body text-sm text-muted-foreground">Status</p>
                     {isPremium ? (
-                      <span className="text-xs font-semibold px-2.5 py-1 rounded-full" style={{ background: "#14532D", color: "#4ADE80" }}>
-                        {subPlan ? subPlan.charAt(0).toUpperCase() + subPlan.slice(1) + " plan" : "Premium"}
+                      <span className="text-xs font-semibold px-2.5 py-1 rounded-full" style={{ background: "rgba(74,123,111,0.12)", color: "#3A7A6A", border: "1px solid rgba(74,123,111,0.25)" }}>
+                        ✦ {subPlan ? subPlan.charAt(0).toUpperCase() + subPlan.slice(1) + " plan" : "Premium"}
                       </span>
                     ) : trialActive ? (
-                      <span className="text-xs font-semibold px-2.5 py-1 rounded-full" style={{ background: "hsl(var(--card))", color: "hsl(var(--primary))" }}>
+                      <span className="text-xs font-semibold px-2.5 py-1 rounded-full" style={{ background: "rgba(224,169,74,0.12)", color: "#A07820", border: "1px solid rgba(224,169,74,0.25)" }}>
                         Trial · {trialDaysLeft}d left
                       </span>
                     ) : (
-                      <span className="text-xs font-semibold px-2.5 py-1 rounded-full" style={{ background: "#450A0A", color: "#F87171" }}>
+                      <span className="text-xs font-semibold px-2.5 py-1 rounded-full" style={{ background: "rgba(220,38,38,0.08)", color: "#B91C1C", border: "1px solid rgba(220,38,38,0.18)" }}>
                         No active plan
                       </span>
                     )}
@@ -296,20 +296,20 @@ const Settings = () => {
                   className="p-6 rounded-2xl mb-6"
                   style={{ background: "hsl(var(--card))", border: "1.5px solid hsl(var(--border))" }}
                 >
-                  <div className="flex items-center gap-2 mb-1.5">
-                    <span style={{ color: "hsl(var(--primary))" }}>✦</span>
+                  <div className="flex items-center gap-2 mb-1">
+                    <CreditCard className="w-4 h-4" style={{ color: "hsl(var(--primary))" }} />
                     <h2 className="font-display text-base font-semibold" style={{ color: "hsl(var(--foreground))" }}>Upgrade your plan</h2>
                   </div>
-                  <p className="font-body text-sm mb-4" style={{ color: "hsl(var(--muted-foreground))" }}>
+                  <p className="font-body text-sm mb-5" style={{ color: "hsl(var(--muted-foreground))" }}>
                     {trialActive
                       ? `Your trial ends in ${trialDaysLeft} day${trialDaysLeft !== 1 ? "s" : ""}. Pick a plan to keep access.`
                       : "Your trial has ended. Subscribe to continue your wellness journey."}
                   </p>
                   <div className="grid grid-cols-3 gap-2">
                     {([
-                      { id: "weekly" as const, label: "Weekly", price: "$3", badge: false },
-                      { id: "monthly" as const, label: "Monthly", price: "$10", badge: true },
-                      { id: "yearly" as const, label: "Yearly", price: "$199", badge: false },
+                      { id: "weekly" as const, label: "Weekly", price: "$3", sub: "/week", badge: false },
+                      { id: "monthly" as const, label: "Monthly", price: "$10", sub: "/month", badge: true },
+                      { id: "yearly" as const, label: "Yearly", price: "$198", sub: "/year", badge: false },
                     ]).map((p) => (
                       <button
                         key={p.id}
@@ -317,16 +317,22 @@ const Settings = () => {
                         disabled={upgradeLoading}
                         className="flex flex-col items-center py-4 rounded-xl font-body transition-all disabled:opacity-60 active:scale-[0.97]"
                         style={{
-                          background: p.badge
-                            ? "hsl(var(--primary))"
-                            : "hsl(var(--muted))",
-                          border: p.badge ? "none" : "1px solid hsl(var(--border))",
-                          boxShadow: p.badge ? "0 4px 20px rgba(109,40,217,0.4)" : "none",
-                          color: "#fff",
+                          background: p.badge ? "hsl(var(--primary))" : "hsl(var(--background))",
+                          border: p.badge
+                            ? "1.5px solid hsl(var(--primary))"
+                            : "1.5px solid hsl(var(--border))",
+                          boxShadow: p.badge ? "0 4px 16px rgba(74,123,111,0.22)" : "none",
                         }}
                       >
-                        <span className="font-bold text-lg">{p.price}</span>
-                        <span className="text-sm mt-0.5" style={{ color: p.badge ? "rgba(58,46,42,0.80)" : "hsl(var(--muted-foreground))" }}>{p.label}</span>
+                        <span className="font-bold text-xl" style={{ color: p.badge ? "#fff" : "hsl(var(--foreground))" }}>
+                          {p.price}
+                        </span>
+                        <span className="text-[11px] mt-0.5" style={{ color: p.badge ? "rgba(255,255,255,0.75)" : "hsl(var(--muted-foreground))" }}>
+                          {p.sub}
+                        </span>
+                        <span className="text-xs font-medium mt-1.5" style={{ color: p.badge ? "rgba(255,255,255,0.9)" : "hsl(var(--foreground))" }}>
+                          {p.label}
+                        </span>
                       </button>
                     ))}
                   </div>
