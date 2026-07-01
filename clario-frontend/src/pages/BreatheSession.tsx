@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence, useSpring, useTransform } from "framer-motion";
 import { X, UserRound, Music2, VolumeX, Vibrate, ArrowLeft } from "lucide-react";
+import { useTheme } from "@/hooks/useTheme";
 
 type Phase = "inhale" | "hold" | "exhale" | "rest";
 
@@ -160,6 +161,8 @@ export default function BreatheSession() {
   const { emotion = "anxiety" } = useParams<{ emotion: string }>();
   const navigate = useNavigate();
   const pattern = PATTERNS[emotion] ?? PATTERNS.anxiety;
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
 
   const [phaseIdx, setPhaseIdx] = useState(0);
   const [countdown, setCountdown] = useState(pattern.phases[0].duration);
@@ -405,21 +408,30 @@ export default function BreatheSession() {
   const timeLeft = totalSeconds - elapsed;
   const timeLeftStr = `${Math.floor(timeLeft / 60)}:${String(timeLeft % 60).padStart(2, "0")}`;
 
+  // ── Theme-derived tokens ────────────────────────────────────────────────────
+  const bg          = isDark ? "#0B1628"                 : "hsl(var(--background))";
+  const palmFill    = isDark ? "#07101f"                 : "rgba(74,123,111,0.13)";
+  const btnBg       = isDark ? "rgba(255,255,255,0.08)"  : "rgba(58,46,42,0.06)";
+  const btnColor    = isDark ? "rgba(255,255,255,0.55)"  : "rgba(58,46,42,0.55)";
+  const taglineColor= isDark ? "rgba(160,180,220,0.60)"  : "hsl(var(--muted-foreground))";
+  const mutedColor  = isDark ? "rgba(255,255,255,0.22)"  : "rgba(58,46,42,0.30)";
+  const iconInactive= isDark ? "rgba(255,255,255,0.28)"  : "rgba(58,46,42,0.32)";
+  const iconBtnBg   = isDark ? "rgba(255,255,255,0.06)"  : "rgba(58,46,42,0.05)";
+  const iconBtnBdr  = isDark ? "rgba(255,255,255,0.08)"  : "rgba(58,46,42,0.08)";
+
   return (
     <div
       className="min-h-screen w-full flex flex-col relative overflow-hidden select-none"
-      style={{ backgroundColor: "#0B1628" }}
+      style={{ backgroundColor: bg }}
     >
-      {/* ── Stars ──────────────────────────────────────────────────────────── */}
-      <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 0 }}>
-        {STARS.map((s, i) => (
-          <circle
-            key={i}
-            cx={`${s.x}%`} cy={`${s.y}%`}
-            r={s.r} fill="white" opacity={s.op}
-          />
-        ))}
-      </svg>
+      {/* ── Stars (dark only) ──────────────────────────────────────────────── */}
+      {isDark && (
+        <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 0 }}>
+          {STARS.map((s, i) => (
+            <circle key={i} cx={`${s.x}%`} cy={`${s.y}%`} r={s.r} fill="white" opacity={s.op} />
+          ))}
+        </svg>
+      )}
 
       {/* ── Palm silhouettes ───────────────────────────────────────────────── */}
       <svg
@@ -429,30 +441,19 @@ export default function BreatheSession() {
         preserveAspectRatio="xMidYMin slice"
       >
         {/* LEFT palm cluster */}
-        <g fill="#07101f">
-          {/* main frond — upper right */}
+        <g fill={palmFill}>
           <path d="M -25,-15 C 20,5 80,-30 220,10 C 190,55 80,50 10,35 Z" opacity="0.95" />
-          {/* second frond — spreading right */}
           <path d="M -25,-15 C 10,30 100,20 280,55 C 240,100 110,95 30,70 Z" opacity="0.88" />
-          {/* third frond — drooping down */}
           <path d="M -25,-15 C 0,50 20,120 50,230 C 5,220 -15,160 -20,70 Z" opacity="0.85" />
-          {/* fourth frond — lower right */}
           <path d="M -25,-15 C 30,60 90,100 170,200 C 110,210 40,165 5,100 Z" opacity="0.78" />
-          {/* small leaf — far right */}
           <path d="M -25,-15 C 60,10 160,0 310,30 C 270,65 150,60 50,40 Z" opacity="0.7" />
         </g>
-
         {/* RIGHT palm cluster */}
-        <g fill="#07101f">
-          {/* main frond — upper left */}
+        <g fill={palmFill}>
           <path d="M 400,-15 C 355,5 295,-30 155,10 C 185,55 295,50 365,35 Z" opacity="0.95" />
-          {/* second frond — spreading left */}
           <path d="M 400,-15 C 365,30 275,20 95,55 C 135,100 265,95 345,70 Z" opacity="0.88" />
-          {/* third frond — drooping down */}
           <path d="M 400,-15 C 375,50 355,120 325,230 C 370,220 390,160 395,70 Z" opacity="0.85" />
-          {/* fourth frond — lower left */}
           <path d="M 400,-15 C 345,60 285,100 205,200 C 265,210 335,165 370,100 Z" opacity="0.78" />
-          {/* small leaf — far left */}
           <path d="M 400,-15 C 315,10 215,0 65,30 C 105,65 225,60 325,40 Z" opacity="0.7" />
         </g>
       </svg>
@@ -461,8 +462,8 @@ export default function BreatheSession() {
       <button
         type="button"
         onClick={() => navigate("/daily-check")}
-        className="absolute top-5 left-5 z-30 flex items-center gap-1.5 px-3 py-2 rounded-full transition-opacity hover:opacity-60 text-sm"
-        style={{ backgroundColor: "rgba(58,46,42,0.08)", color: "rgba(58,46,42,0.60)" }}
+        className="absolute top-5 left-5 z-30 flex items-center gap-1.5 px-3 py-2 rounded-full transition-opacity hover:opacity-60 text-sm font-medium"
+        style={{ backgroundColor: btnBg, color: btnColor }}
       >
         <ArrowLeft className="w-4 h-4" />
         Home
@@ -473,9 +474,9 @@ export default function BreatheSession() {
         type="button"
         onClick={() => navigate("/breathe")}
         className="absolute top-5 right-5 z-30 w-10 h-10 flex items-center justify-center rounded-full transition-opacity hover:opacity-60"
-        style={{ backgroundColor: "rgba(58,46,42,0.08)" }}
+        style={{ backgroundColor: btnBg }}
       >
-        <X className="w-5 h-5 text-foreground" />
+        <X className="w-5 h-5" style={{ color: btnColor }} />
       </button>
 
       {/* ── Header ────────────────────────────────────────────────────────── */}
@@ -489,22 +490,21 @@ export default function BreatheSession() {
             <circle cx="20" cy="20" r="2"  fill={pattern.color} opacity="0.8" />
           </svg>
         </div>
-        <p className="text-xs mb-5" style={{ color: "rgba(58,46,42,0.35)" }}>
+        <p className="text-xs mb-5" style={{ color: mutedColor }}>
           {pattern.totalMinutes} min
         </p>
 
         {/* Emotion title */}
-        <h1 className="text-4xl font-bold text-foreground mb-1" style={{ letterSpacing: "-0.3px" }}>
+        <h1 className="text-4xl font-bold mb-1" style={{ color: "hsl(var(--foreground))", letterSpacing: "-0.3px" }}>
           {pattern.label}
         </h1>
-        <p className="text-sm text-center" style={{ color: "rgba(160,180,220,0.6)" }}>
+        <p className="text-sm text-center" style={{ color: taglineColor }}>
           {pattern.tagline}
         </p>
       </div>
 
       {/* ── Wave + circle ─────────────────────────────────────────────────── */}
       <div className="flex-1 relative z-10" style={{ minHeight: 240 }}>
-        {/* Wave line — viewBox 0 0 100 100, preserveAspectRatio=none → always edge-to-edge */}
         <svg
           viewBox="0 0 100 100"
           preserveAspectRatio="none"
@@ -522,7 +522,7 @@ export default function BreatheSession() {
           />
         </svg>
 
-        {/* Circle orb — HTML div so it stays perfectly circular at any viewport */}
+        {/* Circle orb */}
         <motion.div
           className="absolute left-1/2 pointer-events-none"
           style={{
@@ -532,10 +532,12 @@ export default function BreatheSession() {
             width: 48,
             height: 48,
             borderRadius: "50%",
-            backgroundColor: "#0B1628",
+            backgroundColor: bg,
             border: `1.5px solid ${pattern.color}`,
             opacity: running ? 1 : 0.45,
-            boxShadow: `0 0 22px 4px ${pattern.color}22`,
+            boxShadow: isDark
+              ? `0 0 22px 4px ${pattern.color}22`
+              : `0 0 28px 6px ${pattern.color}28, 0 2px 12px rgba(0,0,0,0.06)`,
           }}
         />
       </div>
@@ -549,7 +551,8 @@ export default function BreatheSession() {
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
-              className="text-3xl font-semibold text-foreground mb-1"
+              className="text-3xl font-semibold mb-1"
+              style={{ color: "hsl(var(--foreground))" }}
             >
               Done ✓
             </motion.p>
@@ -560,14 +563,15 @@ export default function BreatheSession() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.4 }}
-              className="text-3xl font-semibold text-foreground mb-1"
+              className="text-3xl font-semibold mb-1"
+              style={{ color: "hsl(var(--foreground))" }}
             >
               {running ? currentPhase.text : "—"}
             </motion.p>
           )}
         </AnimatePresence>
 
-        <p className="text-sm tabular-nums mb-6" style={{ color: "rgba(58,46,42,0.28)" }}>
+        <p className="text-sm tabular-nums mb-6" style={{ color: mutedColor }}>
           {running && !done ? timeLeftStr : `${pattern.totalMinutes}:00`}
         </p>
 
@@ -578,8 +582,12 @@ export default function BreatheSession() {
             animate={{ opacity: 1, y: 0 }}
             type="button"
             onClick={start}
-            className="mb-5 px-8 py-3 rounded-2xl text-foreground font-semibold text-sm transition-opacity hover:opacity-80"
-            style={{ backgroundColor: pattern.color + "33", border: `1px solid ${pattern.color}55`, color: "rgba(58,46,42,0.90)" }}
+            className="mb-5 px-8 py-3 rounded-2xl font-semibold text-sm transition-opacity hover:opacity-80"
+            style={{
+              backgroundColor: pattern.color + "22",
+              border: `1.5px solid ${pattern.color}55`,
+              color: isDark ? pattern.color : "hsl(var(--foreground))",
+            }}
           >
             start · {pattern.totalMinutes} min
           </motion.button>
@@ -590,8 +598,12 @@ export default function BreatheSession() {
             animate={{ opacity: 1, y: 0 }}
             type="button"
             onClick={() => navigate("/breathe")}
-            className="mb-5 px-8 py-3 rounded-2xl text-foreground font-semibold text-sm transition-opacity hover:opacity-80"
-            style={{ backgroundColor: pattern.color + "33", border: `1px solid ${pattern.color}55` }}
+            className="mb-5 px-8 py-3 rounded-2xl font-semibold text-sm transition-opacity hover:opacity-80"
+            style={{
+              backgroundColor: pattern.color + "22",
+              border: `1.5px solid ${pattern.color}55`,
+              color: isDark ? pattern.color : "hsl(var(--foreground))",
+            }}
           >
             back to breathe
           </motion.button>
@@ -607,14 +619,14 @@ export default function BreatheSession() {
             disabled={voiceLoading}
             className="w-14 h-14 rounded-2xl flex items-center justify-center transition-all hover:opacity-80"
             style={{
-              backgroundColor: voiceOn ? pattern.color + "22" : "rgba(58,46,42,0.06)",
-              border: `1px solid ${voiceOn ? pattern.color + "55" : "rgba(58,46,42,0.07)"}`,
+              backgroundColor: voiceOn ? pattern.color + "22" : iconBtnBg,
+              border: `1px solid ${voiceOn ? pattern.color + "55" : iconBtnBdr}`,
               opacity: voiceLoading ? 0.6 : 1,
             }}
           >
             {voiceLoading
-              ? <div className="w-4 h-4 rounded-full border-2 border-t-transparent animate-spin" style={{ borderColor: pattern.color, borderTopColor: "transparent" }} />
-              : <UserRound className="w-5 h-5" style={{ color: voiceOn ? pattern.color : "rgba(58,46,42,0.35)" }} />
+              ? <div className="w-4 h-4 rounded-full border-2 animate-spin" style={{ borderColor: pattern.color, borderTopColor: "transparent" }} />
+              : <UserRound className="w-5 h-5" style={{ color: voiceOn ? pattern.color : iconInactive }} />
             }
           </button>
 
@@ -625,13 +637,13 @@ export default function BreatheSession() {
             onClick={toggleSound}
             className="w-14 h-14 rounded-2xl flex items-center justify-center transition-all hover:opacity-80"
             style={{
-              backgroundColor: soundOn ? pattern.color + "22" : "rgba(58,46,42,0.06)",
-              border: `1px solid ${soundOn ? pattern.color + "55" : "rgba(58,46,42,0.07)"}`,
+              backgroundColor: soundOn ? pattern.color + "22" : iconBtnBg,
+              border: `1px solid ${soundOn ? pattern.color + "55" : iconBtnBdr}`,
             }}
           >
             {soundOn
               ? <Music2  className="w-5 h-5" style={{ color: pattern.color }} />
-              : <VolumeX className="w-5 h-5" style={{ color: "rgba(58,46,42,0.30)" }} />
+              : <VolumeX className="w-5 h-5" style={{ color: iconInactive }} />
             }
           </button>
 
@@ -640,7 +652,7 @@ export default function BreatheSession() {
             type="button"
             aria-label="haptic"
             className="w-14 h-14 rounded-2xl flex items-center justify-center transition-opacity hover:opacity-70"
-            style={{ backgroundColor: "rgba(58,46,42,0.06)", border: "1px solid rgba(58,46,42,0.07)" }}
+            style={{ backgroundColor: iconBtnBg, border: `1px solid ${iconBtnBdr}` }}
           >
             <Vibrate className="w-5 h-5" style={{ color: pattern.color }} />
           </button>
