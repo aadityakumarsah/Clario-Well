@@ -4,7 +4,24 @@ import { motion } from "framer-motion";
 import { syncSubscription, getSubscriptionStatus } from "@/lib/subscription";
 import { clearSubCache, writeCache } from "@/hooks/useAccess";
 
-type State = "syncing" | "done" | "error";
+type State = "syncing" | "done" | "failed" | "error";
+
+// Dodo failure codes → human-readable messages
+const FAILURE_MESSAGES: Record<string, string> = {
+  LIVE_MODE_TEST_CARD: "You used a test card in live mode. Please use a real credit/debit card.",
+  card_declined: "Your card was declined. Please try a different card.",
+  insufficient_funds: "Your card has insufficient funds. Please try a different card.",
+  expired_card: "Your card has expired. Please use a different card.",
+  incorrect_cvc: "Your card's security code is incorrect. Please check and try again.",
+};
+
+function getFailureMessage(raw?: string | null): string {
+  if (!raw) return "Your payment was not completed. No charge was made.";
+  for (const [key, msg] of Object.entries(FAILURE_MESSAGES)) {
+    if (raw.toUpperCase().includes(key.toUpperCase())) return msg;
+  }
+  return "Your payment was not completed. No charge was made.";
+}
 
 export default function PaywallSuccess() {
   const navigate = useNavigate();
@@ -12,16 +29,28 @@ export default function PaywallSuccess() {
   const [state, setState] = useState<State>("syncing");
   const [attempt, setAttempt] = useState(0);
 
-  // Dodo Payments appends ?subscription_id=...&status=active; legacy Stripe used session_id
-  const sessionId = searchParams.get("subscription_id") ?? searchParams.get("session_id");
-  const dodoStatus = searchParams.get("status"); // "active" when Dodo confirms payment
+  const sessionId   = searchParams.get("subscription_id") ?? searchParams.get("session_id");
+  const dodoStatus  = searchParams.get("status");   // "active" | "failed" | "pending"
+  const errorCode   = searchParams.get("error") ?? searchParams.get("error_code");
+
+  // Detect payment failure immediately — don't try to activate
+  useEffect(() => {
+    if (dodoStatus === "failed" || dodoStatus === "cancelled" || dodoStatus === "canceled") {
+      setState("failed");
+    }
+  }, [dodoStatus]);
 
   const doSync = useCallback(async () => {
+    // Don't sync on failure
+    if (dodoStatus === "failed" || dodoStatus === "cancelled" || dodoStatus === "canceled") {
+      setState("failed");
+      return;
+    }
+
     setState("syncing");
 
     // Dodo redirect with status=active is trusted proof of payment.
-    // Activate locally right away so the user gets access immediately,
-    // then fire a background sync so the DB catches up.
+    // Activate locally right away, sync DB in background.
     if (dodoStatus === "active") {
       clearSubCache();
       writeCache({ active: true, plan: null, expires_at: null });
@@ -32,7 +61,7 @@ export default function PaywallSuccess() {
       return;
     }
 
-    // Fallback: no Dodo status — wait on backend sync
+    // No status in URL — wait on backend sync
     try {
       if (sessionId) {
         await syncSubscription(sessionId);
@@ -51,7 +80,7 @@ export default function PaywallSuccess() {
     }
   }, [sessionId, dodoStatus, attempt]);
 
-  // Auto-retry once after 8s if the first attempt fails (catches brief server hiccups)
+  // Auto-retry once after 8s if backend sync failed (server cold start)
   useEffect(() => {
     if (state !== "error" || attempt > 0) return;
     const t = setTimeout(() => setAttempt(1), 8000);
@@ -60,6 +89,52 @@ export default function PaywallSuccess() {
 
   useEffect(() => { doSync(); }, [attempt]);
 
+  // ── Payment failed ─────────────────────────────────────────────────────────
+  if (state === "failed") {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center px-4 py-12" style={{ background: "#060F1E" }}>
+        <motion.div
+          initial={{ opacity: 0, scale: 0.92 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.4 }}
+          className="text-center space-y-6 max-w-sm"
+        >
+          <div
+            className="mx-auto w-16 h-16 rounded-full flex items-center justify-center"
+            style={{ background: "rgba(239,68,68,0.15)", border: "1.5px solid #EF4444" }}
+          >
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#EF4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
+            </svg>
+          </div>
+
+          <h1 className="text-2xl font-bold text-white">Payment failed</h1>
+
+          <p className="text-sm leading-relaxed" style={{ color: "#94A3B8" }}>
+            {getFailureMessage(errorCode ?? dodoStatus)}
+          </p>
+
+          <button
+            onClick={() => navigate("/paywall")}
+            className="w-full py-3 rounded-xl text-sm font-semibold"
+            style={{ background: "#7C3AED", color: "#fff" }}
+          >
+            Try again
+          </button>
+
+          <button
+            onClick={() => navigate("/daily-check")}
+            className="w-full py-2 text-xs"
+            style={{ color: "#64748B" }}
+          >
+            Go back to app
+          </button>
+        </motion.div>
+      </div>
+    );
+  }
+
+  // ── Syncing ────────────────────────────────────────────────────────────────
   if (state === "syncing") {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-4" style={{ background: "#060F1E" }}>
@@ -71,6 +146,7 @@ export default function PaywallSuccess() {
     );
   }
 
+  // ── Sync error (backend unreachable) ───────────────────────────────────────
   if (state === "error") {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center px-4 py-12" style={{ background: "#060F1E" }}>
@@ -116,6 +192,7 @@ export default function PaywallSuccess() {
     );
   }
 
+  // ── Success ────────────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-4 py-12" style={{ background: "#060F1E" }}>
       <motion.div
