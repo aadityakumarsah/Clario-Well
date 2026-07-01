@@ -354,7 +354,7 @@ export default function Paywall() {
             <div className="flex flex-col items-center gap-3 mt-1">
               {stillInTrial && (
                 <button
-                  onClick={() => navigate(-1)}
+                  onClick={() => navigate("/daily-check")}
                   className="px-6 py-2.5 rounded-xl text-sm font-medium transition-opacity hover:opacity-80"
                   style={{
                     background: "rgba(255,255,255,0.06)",
