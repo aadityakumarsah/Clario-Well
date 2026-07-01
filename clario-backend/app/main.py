@@ -31,7 +31,7 @@ def on_startup():
 # Configure CORS based on environment
 _raw_origins = os.getenv(
     "ALLOWED_ORIGINS",
-    "http://localhost:3000,http://localhost:5173,http://localhost:8080,https://echo-one-kappa-72.vercel.app"
+    "http://localhost:3000,http://localhost:5173,http://localhost:8080,https://clario-np.vercel.app"
 )
 ALLOWED_ORIGINS = [o.strip().rstrip("/") for o in _raw_origins.split(",") if o.strip()]
 
