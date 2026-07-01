@@ -75,9 +75,9 @@ function EmotionCard({ emotion, height }: { emotion: Emotion; height: number }) 
         <span
           className="inline-block px-2 py-0.5 rounded-full text-[11px] font-semibold"
           style={{
-            backgroundColor: "rgba(255,255,255,0.12)",
-            border: "1px solid rgba(255,255,255,0.18)",
-            color: "rgba(255,255,255,0.7)",
+            backgroundColor: "rgba(58,46,42,0.12)",
+            border: "1px solid rgba(58,46,42,0.18)",
+            color: "rgba(58,46,42,0.70)",
             letterSpacing: "0.3px",
           }}
         >

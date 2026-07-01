@@ -18,8 +18,8 @@ export default function PremiumGate({ feature, icon, description, children }: Pr
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: "#0F0F1C" }}>
-        <div className="w-5 h-5 border-2 rounded-full animate-spin" style={{ borderColor: "#8B5CF6", borderTopColor: "transparent" }} />
+      <div className="min-h-screen flex items-center justify-center" style={{ background: "hsl(var(--background))" }}>
+        <div className="w-5 h-5 border-2 rounded-full animate-spin" style={{ borderColor: "hsl(var(--primary))", borderTopColor: "transparent" }} />
       </div>
     );
   }
@@ -29,7 +29,7 @@ export default function PremiumGate({ feature, icon, description, children }: Pr
   return (
     <div
       className="min-h-screen flex flex-col items-center justify-center px-6 relative overflow-hidden"
-      style={{ background: "#0F0F1C" }}
+      style={{ background: "hsl(var(--background))" }}
     >
       {/* Subtle radial */}
       <div
@@ -52,9 +52,9 @@ export default function PremiumGate({ feature, icon, description, children }: Pr
           transition={{ duration: 0.35, delay: 0.08 }}
           className="w-[88px] h-[88px] rounded-[28px] flex items-center justify-center mb-7 text-[44px]"
           style={{
-            background: "linear-gradient(145deg, #1E1B38 0%, #16142A 100%)",
+            background: "hsl(var(--card))",
             border: "1px solid rgba(139,92,246,0.3)",
-            boxShadow: "0 0 0 1px rgba(255,255,255,0.04), 0 8px 32px rgba(0,0,0,0.5)",
+            boxShadow: "0 0 0 1px rgba(58,46,42,0.08), 0 8px 32px rgba(58,46,42,0.12)",
           }}
         >
           {icon}
@@ -81,7 +81,7 @@ export default function PremiumGate({ feature, icon, description, children }: Pr
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.17 }}
           className="text-[28px] font-semibold tracking-tight mb-2.5"
-          style={{ color: "#FFFFFF" }}
+          style={{ color: "hsl(var(--foreground))" }}
         >
           {feature}
         </motion.h1>
@@ -92,7 +92,7 @@ export default function PremiumGate({ feature, icon, description, children }: Pr
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.21 }}
           className="text-sm leading-relaxed mb-9 px-2"
-          style={{ color: "#8B8B70" }}
+          style={{ color: "hsl(var(--muted-foreground))" }}
         >
           {description}
         </motion.p>
@@ -104,16 +104,16 @@ export default function PremiumGate({ feature, icon, description, children }: Pr
           transition={{ delay: 0.27 }}
           className="w-full rounded-2xl p-5 mb-5"
           style={{
-            background: "linear-gradient(145deg, #151430 0%, #111128 100%)",
+            background: "hsl(var(--card))",
             border: "1.5px solid rgba(109,40,217,0.55)",
           }}
         >
           {/* Section header */}
           <div className="flex items-center gap-2 mb-1.5">
             <span style={{ color: "hsl(var(--primary))" }}>✦</span>
-            <span className="font-semibold text-base" style={{ color: "#FFFFFF" }}>Upgrade your plan</span>
+            <span className="font-semibold text-base" style={{ color: "hsl(var(--foreground))" }}>Upgrade your plan</span>
           </div>
-          <p className="text-sm mb-4 text-left" style={{ color: "#8B8B70" }}>
+          <p className="text-sm mb-4 text-left" style={{ color: "hsl(var(--muted-foreground))" }}>
             {trialDaysLeft > 0
               ? `Your trial ends in ${trialDaysLeft} day${trialDaysLeft !== 1 ? "s" : ""}. Pick a plan to keep access.`
               : "Your trial has ended. Subscribe to continue."}
@@ -132,14 +132,14 @@ export default function PremiumGate({ feature, icon, description, children }: Pr
                 className="flex flex-col items-center py-4 rounded-xl transition-opacity hover:opacity-90 active:scale-[0.97]"
                 style={{
                   background: p.highlight
-                    ? "linear-gradient(145deg, #8B5CF6 0%, #6D28D9 100%)"
-                    : "#1A1A30",
-                  border: p.highlight ? "none" : "1px solid rgba(255,255,255,0.06)",
+                    ? "hsl(var(--primary))"
+                    : "hsl(var(--muted))",
+                  border: p.highlight ? "none" : "1px solid hsl(var(--border))",
                   boxShadow: p.highlight ? "0 4px 20px rgba(109,40,217,0.4)" : "none",
                 }}
               >
-                <span className="text-xl font-bold" style={{ color: "#FFFFFF" }}>{p.price}</span>
-                <span className="text-sm mt-0.5" style={{ color: p.highlight ? "rgba(255,255,255,0.8)" : "#6B6B58" }}>
+                <span className="text-xl font-bold" style={{ color: "hsl(var(--foreground))" }}>{p.price}</span>
+                <span className="text-sm mt-0.5" style={{ color: p.highlight ? "rgba(58,46,42,0.80)" : "hsl(var(--muted-foreground))" }}>
                   {p.label}
                 </span>
               </button>
@@ -154,7 +154,7 @@ export default function PremiumGate({ feature, icon, description, children }: Pr
           transition={{ delay: 0.35 }}
           onClick={() => navigate(-1)}
           className="text-xs transition-opacity hover:opacity-70"
-          style={{ color: "#4B4B40" }}
+          style={{ color: "hsl(var(--muted-foreground))" }}
         >
           Go back
         </motion.button>

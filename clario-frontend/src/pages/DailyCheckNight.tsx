@@ -26,7 +26,7 @@ export default function DailyCheckNight() {
           type="button"
           onClick={() => navigate("/daily-check")}
           className="flex items-center gap-2 text-sm font-medium transition-opacity hover:opacity-70"
-          style={{ color: "rgba(255,255,255,0.4)" }}
+          style={{ color: "rgba(58,46,42,0.40)" }}
         >
           <ArrowLeft className="w-4 h-4" />
           back
@@ -79,7 +79,7 @@ export default function DailyCheckNight() {
           <motion.p
             variants={fadeUp}
             className="text-sm leading-relaxed"
-            style={{ color: "rgba(255,255,255,0.45)" }}
+            style={{ color: "rgba(58,46,42,0.45)" }}
           >
             Share your whole day with your voice agent — what happened, how it felt, what's still sitting with you.
             Nothing is too small or too messy.
@@ -88,7 +88,7 @@ export default function DailyCheckNight() {
           <motion.p
             variants={fadeUp}
             className="text-sm leading-relaxed"
-            style={{ color: "rgba(255,255,255,0.28)" }}
+            style={{ color: "rgba(58,46,42,0.28)" }}
           >
             Your voice agent is waiting on the dashboard. Tap below to start a night reflection.
           </motion.p>
@@ -113,7 +113,7 @@ export default function DailyCheckNight() {
             type="button"
             onClick={() => navigate("/daily-check")}
             className="text-xs transition-opacity hover:opacity-60"
-            style={{ color: "rgba(255,255,255,0.25)" }}
+            style={{ color: "rgba(58,46,42,0.25)" }}
           >
             maybe later
           </motion.button>

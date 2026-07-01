@@ -182,7 +182,7 @@ export default function Meditation() {
       // ── skeleton overlay ───────────────────────────────────────────────────
       const skeletonColor = isRunningRef.current
         ? (stable ? GOOD_COLOR : BAD_COLOR)
-        : "rgba(255,255,255,0.4)";
+        : "rgba(58,46,42,0.40)";
 
       mpW.drawConnectors(ctx, lm, mpW.POSE_CONNECTIONS, {
         color: skeletonColor + "99",
@@ -323,7 +323,7 @@ export default function Meditation() {
         {/* Camera canvas */}
         <div
           className="relative flex-1 rounded-2xl overflow-hidden min-h-[300px]"
-          style={{ border: `1px solid rgba(255,255,255,0.07)`, backgroundColor: "#020810" }}
+          style={{ border: `1px solid rgba(58,46,42,0.07)`, backgroundColor: "#020810" }}
         >
           {/* Loading */}
           {!loaded && (
@@ -372,13 +372,13 @@ export default function Meditation() {
               style={{
                 backgroundColor: "rgba(2,8,16,0.72)",
                 backdropFilter: "blur(8px)",
-                color: inLotus ? GOOD_COLOR : "rgba(255,255,255,0.45)",
-                border: `1px solid ${inLotus ? GOOD_COLOR + "44" : "rgba(255,255,255,0.08)"}`,
+                color: inLotus ? GOOD_COLOR : "rgba(58,46,42,0.45)",
+                border: `1px solid ${inLotus ? GOOD_COLOR + "44" : "rgba(58,46,42,0.08)"}`,
               }}
             >
               <span
                 className="w-1.5 h-1.5 rounded-full"
-                style={{ backgroundColor: inLotus ? GOOD_COLOR : "rgba(255,255,255,0.25)" }}
+                style={{ backgroundColor: inLotus ? GOOD_COLOR : "rgba(58,46,42,0.25)" }}
               />
               {inLotus ? "Lotus detected" : "Awaiting pose"}
             </div>
@@ -392,11 +392,11 @@ export default function Meditation() {
           <div
             className="flex-1 lg:flex-none rounded-2xl p-4"
             style={{
-              backgroundColor: "rgba(255,255,255,0.03)",
-              border: "1px solid rgba(255,255,255,0.06)",
+              backgroundColor: "rgba(58,46,42,0.03)",
+              border: "1px solid rgba(58,46,42,0.06)",
             }}
           >
-            <p className="text-[10px] uppercase tracking-widest mb-2" style={{ color: "rgba(255,255,255,0.3)" }}>
+            <p className="text-[10px] uppercase tracking-widest mb-2" style={{ color: "rgba(58,46,42,0.30)" }}>
               posture
             </p>
             <div className="flex items-center gap-2 mb-3">
@@ -411,7 +411,7 @@ export default function Meditation() {
             </div>
 
             {/* Movement bar */}
-            <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: "rgba(255,255,255,0.06)" }}>
+            <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: "rgba(58,46,42,0.06)" }}>
               <motion.div
                 className="h-full rounded-full transition-colors duration-200"
                 style={{ backgroundColor: movementPct > 0.6 ? BAD_COLOR : GOOD_COLOR }}
@@ -419,7 +419,7 @@ export default function Meditation() {
                 transition={{ duration: 0.15 }}
               />
             </div>
-            <p className="text-[10px] mt-1.5" style={{ color: "rgba(255,255,255,0.22)" }}>
+            <p className="text-[10px] mt-1.5" style={{ color: "rgba(58,46,42,0.22)" }}>
               movement level
             </p>
           </div>
@@ -428,11 +428,11 @@ export default function Meditation() {
           <div
             className="flex-1 lg:flex-none rounded-2xl p-4"
             style={{
-              backgroundColor: "rgba(255,255,255,0.03)",
-              border: "1px solid rgba(255,255,255,0.06)",
+              backgroundColor: "rgba(58,46,42,0.03)",
+              border: "1px solid rgba(58,46,42,0.06)",
             }}
           >
-            <p className="text-[10px] uppercase tracking-widest mb-1.5" style={{ color: "rgba(255,255,255,0.3)" }}>
+            <p className="text-[10px] uppercase tracking-widest mb-1.5" style={{ color: "rgba(58,46,42,0.30)" }}>
               posture breaks
             </p>
             <span
@@ -447,11 +447,11 @@ export default function Meditation() {
           <div
             className="flex-1 lg:flex-none rounded-2xl p-4"
             style={{
-              backgroundColor: "rgba(255,255,255,0.03)",
-              border: "1px solid rgba(255,255,255,0.06)",
+              backgroundColor: "rgba(58,46,42,0.03)",
+              border: "1px solid rgba(58,46,42,0.06)",
             }}
           >
-            <p className="text-[10px] uppercase tracking-widest mb-1.5" style={{ color: "rgba(255,255,255,0.3)" }}>
+            <p className="text-[10px] uppercase tracking-widest mb-1.5" style={{ color: "rgba(58,46,42,0.30)" }}>
               held for
             </p>
             <span className="text-3xl font-bold text-foreground tabular-nums font-mono">
@@ -463,11 +463,11 @@ export default function Meditation() {
           <div
             className="hidden lg:block rounded-2xl p-4"
             style={{
-              backgroundColor: "rgba(255,255,255,0.02)",
-              border: "1px solid rgba(255,255,255,0.05)",
+              backgroundColor: "rgba(58,46,42,0.02)",
+              border: "1px solid rgba(58,46,42,0.05)",
             }}
           >
-            <p className="text-[10px] uppercase tracking-widest mb-2.5" style={{ color: "rgba(255,255,255,0.22)" }}>
+            <p className="text-[10px] uppercase tracking-widest mb-2.5" style={{ color: "rgba(58,46,42,0.22)" }}>
               how to
             </p>
             <ul className="space-y-1.5">
@@ -477,7 +477,7 @@ export default function Meditation() {
                 "Press Start to begin",
                 "Horn fires if you move",
               ].map((t, i) => (
-                <li key={i} className="flex gap-2 text-xs leading-snug" style={{ color: "rgba(255,255,255,0.35)" }}>
+                <li key={i} className="flex gap-2 text-xs leading-snug" style={{ color: "rgba(58,46,42,0.35)" }}>
                   <span style={{ color: ACCENT }}>·</span>
                   {t}
                 </li>

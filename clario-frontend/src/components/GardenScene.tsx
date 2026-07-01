@@ -453,7 +453,7 @@ export default function GardenScene({ completed }: GardenSceneProps) {
           </linearGradient>
           <linearGradient id="darkFade" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%"   stopColor="transparent" />
-            <stop offset="60%"  stopColor="rgba(6,15,30,0.50)" />
+            <stop offset="60%"  stopColor="hsl(var(--background))" />
             <stop offset="100%" stopColor="#FAF6F1" />
           </linearGradient>
         </defs>

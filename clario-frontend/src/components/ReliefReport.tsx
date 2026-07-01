@@ -61,17 +61,17 @@ export default function ReliefReport({ activity, duration, score, onClose }: Pro
       initial={{ opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
       className="fixed inset-0 z-50 overflow-y-auto"
-      style={{ background: "#0F0E0C" }}
+      style={{ background: "hsl(var(--background))" }}
     >
       <div className="max-w-lg mx-auto px-5 pt-10 pb-28">
         {/* Header */}
         <div className="flex items-start justify-between mb-8">
           <div>
-            <p className="text-xs uppercase tracking-widest mb-1" style={{ color: "rgba(255,255,255,0.3)" }}>
+            <p className="text-xs uppercase tracking-widest mb-1" style={{ color: "hsl(var(--muted-foreground))" }}>
               session complete
             </p>
-            <h1 className="text-2xl font-bold text-foreground">Stress Report</h1>
-            <p className="text-sm mt-0.5" style={{ color: "rgba(255,255,255,0.4)" }}>
+            <h1 className="text-2xl font-bold" style={{ color: "hsl(var(--foreground))" }}>Stress Report</h1>
+            <p className="text-sm mt-0.5" style={{ color: "hsl(var(--muted-foreground))" }}>
               {activity === "drawing" ? "Air Drawing" : "Space Blocks"} · {durationStr}
               {score !== undefined && ` · ${score} pts`}
             </p>
@@ -79,7 +79,7 @@ export default function ReliefReport({ activity, duration, score, onClose }: Pro
           <button
             onClick={onClose}
             className="w-9 h-9 rounded-full flex items-center justify-center shrink-0"
-            style={{ background: "rgba(255,255,255,0.08)" }}
+            style={{ background: "rgba(58,46,42,0.08)" }}
           >
             <X className="w-4 h-4 text-foreground" />
           </button>
@@ -94,11 +94,11 @@ export default function ReliefReport({ activity, duration, score, onClose }: Pro
           style={{ background: "rgba(167,139,250,0.08)", border: "1px solid rgba(167,139,250,0.2)" }}
         >
           <p className="text-6xl font-bold mb-1" style={{ color: "hsl(var(--primary))" }}>{stressReduction}%</p>
-          <p className="text-sm" style={{ color: "rgba(255,255,255,0.5)" }}>estimated stress reduction</p>
+          <p className="text-sm" style={{ color: "rgba(58,46,42,0.50)" }}>estimated stress reduction</p>
         </motion.div>
 
         {/* Metric bars */}
-        <div className="rounded-2xl p-5 mb-4" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}>
+        <div className="rounded-2xl p-5 mb-4" style={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))" }}>
           <div className="space-y-4">
             {BARS.map((b, i) => {
               const Icon = b.icon;
@@ -112,11 +112,11 @@ export default function ReliefReport({ activity, duration, score, onClose }: Pro
                   <div className="flex items-center justify-between mb-1.5">
                     <div className="flex items-center gap-2">
                       <Icon className="w-3.5 h-3.5" style={{ color: b.color }} />
-                      <span className="text-xs" style={{ color: "rgba(255,255,255,0.55)" }}>{b.label}</span>
+                      <span className="text-xs" style={{ color: "rgba(58,46,42,0.55)" }}>{b.label}</span>
                     </div>
                     <span className="text-xs font-semibold" style={{ color: b.color }}>{b.value}%</span>
                   </div>
-                  <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.07)" }}>
+                  <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(58,46,42,0.07)" }}>
                     <motion.div
                       className="h-full rounded-full"
                       style={{ background: b.color }}
@@ -132,10 +132,10 @@ export default function ReliefReport({ activity, duration, score, onClose }: Pro
         </div>
 
         {/* Mood chart */}
-        <div className="rounded-2xl p-5 mb-4" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}>
-          <p className="text-xs mb-3" style={{ color: "rgba(255,255,255,0.4)" }}>Mood during session</p>
+        <div className="rounded-2xl p-5 mb-4" style={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))" }}>
+          <p className="text-xs mb-3" style={{ color: "hsl(var(--muted-foreground))" }}>Mood during session</p>
           <div className="flex items-center gap-3">
-            <span className="text-xs tabular-nums" style={{ color: "rgba(255,255,255,0.3)" }}>{moodBefore}/10</span>
+            <span className="text-xs tabular-nums" style={{ color: "rgba(58,46,42,0.30)" }}>{moodBefore}/10</span>
             <div className="flex-1 overflow-hidden">
               <svg viewBox={`0 0 ${chartW} ${chartH}`} className="w-full" style={{ height: 56 }}>
                 <defs>
@@ -166,14 +166,14 @@ export default function ReliefReport({ activity, duration, score, onClose }: Pro
             <span className="text-xs tabular-nums" style={{ color: "#34D399" }}>{moodAfter}/10</span>
           </div>
           <div className="flex justify-between mt-1">
-            <span className="text-[10px]" style={{ color: "rgba(255,255,255,0.25)" }}>start</span>
-            <span className="text-[10px]" style={{ color: "rgba(255,255,255,0.25)" }}>end</span>
+            <span className="text-[10px]" style={{ color: "rgba(58,46,42,0.25)" }}>start</span>
+            <span className="text-[10px]" style={{ color: "rgba(58,46,42,0.25)" }}>end</span>
           </div>
         </div>
 
         {/* Insights */}
-        <div className="rounded-2xl p-5 mb-6" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}>
-          <p className="text-xs uppercase tracking-wider mb-3" style={{ color: "rgba(255,255,255,0.3)" }}>Why it works</p>
+        <div className="rounded-2xl p-5 mb-6" style={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))" }}>
+          <p className="text-xs uppercase tracking-wider mb-3" style={{ color: "hsl(var(--muted-foreground))" }}>Why it works</p>
           <div className="space-y-3">
             {insights.map((text, i) => (
               <motion.p
@@ -182,7 +182,7 @@ export default function ReliefReport({ activity, duration, score, onClose }: Pro
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.5 + i * 0.1 }}
                 className="text-sm leading-relaxed"
-                style={{ color: "rgba(255,255,255,0.6)" }}
+                style={{ color: "rgba(58,46,42,0.60)" }}
               >
                 <span style={{ color: "hsl(var(--primary))" }}>·</span> {text}
               </motion.p>

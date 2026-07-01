@@ -462,7 +462,7 @@ export default function BreatheSession() {
         type="button"
         onClick={() => navigate("/daily-check")}
         className="absolute top-5 left-5 z-30 flex items-center gap-1.5 px-3 py-2 rounded-full transition-opacity hover:opacity-60 text-sm"
-        style={{ backgroundColor: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.6)" }}
+        style={{ backgroundColor: "rgba(58,46,42,0.08)", color: "rgba(58,46,42,0.60)" }}
       >
         <ArrowLeft className="w-4 h-4" />
         Home
@@ -473,7 +473,7 @@ export default function BreatheSession() {
         type="button"
         onClick={() => navigate("/breathe")}
         className="absolute top-5 right-5 z-30 w-10 h-10 flex items-center justify-center rounded-full transition-opacity hover:opacity-60"
-        style={{ backgroundColor: "rgba(255,255,255,0.08)" }}
+        style={{ backgroundColor: "rgba(58,46,42,0.08)" }}
       >
         <X className="w-5 h-5 text-foreground" />
       </button>
@@ -489,7 +489,7 @@ export default function BreatheSession() {
             <circle cx="20" cy="20" r="2"  fill={pattern.color} opacity="0.8" />
           </svg>
         </div>
-        <p className="text-xs mb-5" style={{ color: "rgba(255,255,255,0.35)" }}>
+        <p className="text-xs mb-5" style={{ color: "rgba(58,46,42,0.35)" }}>
           {pattern.totalMinutes} min
         </p>
 
@@ -567,7 +567,7 @@ export default function BreatheSession() {
           )}
         </AnimatePresence>
 
-        <p className="text-sm tabular-nums mb-6" style={{ color: "rgba(255,255,255,0.28)" }}>
+        <p className="text-sm tabular-nums mb-6" style={{ color: "rgba(58,46,42,0.28)" }}>
           {running && !done ? timeLeftStr : `${pattern.totalMinutes}:00`}
         </p>
 
@@ -579,7 +579,7 @@ export default function BreatheSession() {
             type="button"
             onClick={start}
             className="mb-5 px-8 py-3 rounded-2xl text-foreground font-semibold text-sm transition-opacity hover:opacity-80"
-            style={{ backgroundColor: pattern.color + "33", border: `1px solid ${pattern.color}55`, color: "rgba(255,255,255,0.9)" }}
+            style={{ backgroundColor: pattern.color + "33", border: `1px solid ${pattern.color}55`, color: "rgba(58,46,42,0.90)" }}
           >
             start · {pattern.totalMinutes} min
           </motion.button>
@@ -607,14 +607,14 @@ export default function BreatheSession() {
             disabled={voiceLoading}
             className="w-14 h-14 rounded-2xl flex items-center justify-center transition-all hover:opacity-80"
             style={{
-              backgroundColor: voiceOn ? pattern.color + "22" : "rgba(255,255,255,0.06)",
-              border: `1px solid ${voiceOn ? pattern.color + "55" : "rgba(255,255,255,0.07)"}`,
+              backgroundColor: voiceOn ? pattern.color + "22" : "rgba(58,46,42,0.06)",
+              border: `1px solid ${voiceOn ? pattern.color + "55" : "rgba(58,46,42,0.07)"}`,
               opacity: voiceLoading ? 0.6 : 1,
             }}
           >
             {voiceLoading
               ? <div className="w-4 h-4 rounded-full border-2 border-t-transparent animate-spin" style={{ borderColor: pattern.color, borderTopColor: "transparent" }} />
-              : <UserRound className="w-5 h-5" style={{ color: voiceOn ? pattern.color : "rgba(255,255,255,0.35)" }} />
+              : <UserRound className="w-5 h-5" style={{ color: voiceOn ? pattern.color : "rgba(58,46,42,0.35)" }} />
             }
           </button>
 
@@ -625,13 +625,13 @@ export default function BreatheSession() {
             onClick={toggleSound}
             className="w-14 h-14 rounded-2xl flex items-center justify-center transition-all hover:opacity-80"
             style={{
-              backgroundColor: soundOn ? pattern.color + "22" : "rgba(255,255,255,0.06)",
-              border: `1px solid ${soundOn ? pattern.color + "55" : "rgba(255,255,255,0.07)"}`,
+              backgroundColor: soundOn ? pattern.color + "22" : "rgba(58,46,42,0.06)",
+              border: `1px solid ${soundOn ? pattern.color + "55" : "rgba(58,46,42,0.07)"}`,
             }}
           >
             {soundOn
               ? <Music2  className="w-5 h-5" style={{ color: pattern.color }} />
-              : <VolumeX className="w-5 h-5" style={{ color: "rgba(255,255,255,0.3)" }} />
+              : <VolumeX className="w-5 h-5" style={{ color: "rgba(58,46,42,0.30)" }} />
             }
           </button>
 
@@ -640,7 +640,7 @@ export default function BreatheSession() {
             type="button"
             aria-label="haptic"
             className="w-14 h-14 rounded-2xl flex items-center justify-center transition-opacity hover:opacity-70"
-            style={{ backgroundColor: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.07)" }}
+            style={{ backgroundColor: "rgba(58,46,42,0.06)", border: "1px solid rgba(58,46,42,0.07)" }}
           >
             <Vibrate className="w-5 h-5" style={{ color: pattern.color }} />
           </button>

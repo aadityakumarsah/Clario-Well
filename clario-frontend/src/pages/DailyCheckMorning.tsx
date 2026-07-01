@@ -26,9 +26,9 @@ function WaterGlass({ index, drunk, onClick }: { index: number; drunk: boolean; 
           {/* Outer glass shape */}
           <path
             d="M10 8 L14 92 Q14 96 20 96 L60 96 Q66 96 66 92 L70 8 Z"
-            stroke="rgba(255,255,255,0.25)"
+            stroke="rgba(58,46,42,0.25)"
             strokeWidth="2"
-            fill="rgba(255,255,255,0.04)"
+            fill="rgba(58,46,42,0.04)"
           />
 
           {/* Water fill — animates from bottom */}
@@ -59,7 +59,7 @@ function WaterGlass({ index, drunk, onClick }: { index: number; drunk: boolean; 
           />
 
           {/* Shine */}
-          <line x1="22" y1="16" x2="20" y2="80" stroke="rgba(255,255,255,0.12)" strokeWidth="3" strokeLinecap="round" />
+          <line x1="22" y1="16" x2="20" y2="80" stroke="rgba(58,46,42,0.12)" strokeWidth="3" strokeLinecap="round" />
         </svg>
 
         {/* Check overlay */}
@@ -84,7 +84,7 @@ function WaterGlass({ index, drunk, onClick }: { index: number; drunk: boolean; 
       </div>
 
       {/* Label */}
-      <p className="text-sm font-medium" style={{ color: drunk ? ACCENT : "rgba(255,255,255,0.4)" }}>
+      <p className="text-sm font-medium" style={{ color: drunk ? ACCENT : "rgba(58,46,42,0.40)" }}>
         Glass {index + 1}
       </p>
     </motion.button>
@@ -110,7 +110,7 @@ export default function DailyCheckMorning() {
           type="button"
           onClick={() => navigate("/daily-check")}
           className="flex items-center gap-2 text-sm font-medium transition-opacity hover:opacity-70"
-          style={{ color: "rgba(255,255,255,0.4)" }}
+          style={{ color: "rgba(58,46,42,0.40)" }}
         >
           <ArrowLeft className="w-4 h-4" />
           back
@@ -125,7 +125,7 @@ export default function DailyCheckMorning() {
         <h1 className="text-3xl font-bold text-foreground" style={{ letterSpacing: "-0.4px" }}>
           Hydrate
         </h1>
-        <p className="mt-2 text-sm" style={{ color: "rgba(255,255,255,0.38)" }}>
+        <p className="mt-2 text-sm" style={{ color: "rgba(58,46,42,0.38)" }}>
           Tap each glass once you've drunk it.
         </p>
       </div>
@@ -143,7 +143,7 @@ export default function DailyCheckMorning() {
           {drunk.map((d, i) => (
             <motion.div
               key={i}
-              animate={{ scale: d ? [1, 1.4, 1] : 1, backgroundColor: d ? ACCENT : "rgba(255,255,255,0.12)" }}
+              animate={{ scale: d ? [1, 1.4, 1] : 1, backgroundColor: d ? ACCENT : "rgba(58,46,42,0.12)" }}
               transition={{ duration: 0.4 }}
               className="w-2.5 h-2.5 rounded-full"
             />
@@ -157,7 +157,7 @@ export default function DailyCheckMorning() {
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               className="text-sm text-center"
-              style={{ color: "rgba(255,255,255,0.45)" }}
+              style={{ color: "rgba(58,46,42,0.45)" }}
             >
               Your body thanks you. 💧
             </motion.p>
@@ -185,9 +185,9 @@ export default function DailyCheckMorning() {
               key="waiting"
               className="w-full py-4 rounded-2xl text-center text-sm font-medium"
               style={{
-                backgroundColor: "rgba(255,255,255,0.04)",
-                border: "1px solid rgba(255,255,255,0.08)",
-                color: "rgba(255,255,255,0.2)",
+                backgroundColor: "rgba(58,46,42,0.04)",
+                border: "1px solid rgba(58,46,42,0.08)",
+                color: "rgba(58,46,42,0.20)",
               }}
             >
               tap both glasses to complete

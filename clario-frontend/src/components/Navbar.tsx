@@ -241,8 +241,8 @@ const Navbar = () => {
               className="md:hidden fixed left-0 right-0 z-50 rounded-t-3xl px-5 pt-5 pb-8"
               style={{
                 bottom: "calc(56px + env(safe-area-inset-bottom, 0px))",
-                background: isDark ? "rgba(12,14,22,0.97)" : "rgba(250,246,241,0.98)",
-                border: isDark ? "1px solid rgba(255,255,255,0.08)" : "1px solid rgba(58,46,42,0.12)",
+                background: isDark ? "hsl(var(--card))" : "rgba(250,246,241,0.98)",
+                border: isDark ? "1px solid hsl(var(--border))" : "1px solid rgba(58,46,42,0.12)",
                 borderBottom: "none",
               }}
             >
@@ -251,7 +251,7 @@ const Navbar = () => {
 
               <div className="flex items-center justify-between mb-5">
                 <div>
-                  <p className="font-semibold text-base" style={{ color: isDark ? "#fff" : "#3A2E2A" }}>Mood & Wellness</p>
+                  <p className="font-semibold text-base" style={{ color: isDark ? "hsl(var(--foreground))" : "#3A2E2A" }}>Mood & Wellness</p>
                   <p className="text-xs mt-0.5" style={{ color: isDark ? "rgba(255,255,255,0.38)" : "rgba(58,46,42,0.5)" }}>
                     Choose an activity
                   </p>
@@ -281,7 +281,7 @@ const Navbar = () => {
                       <Icon className="w-5 h-5" style={{ color }} />
                     </div>
                     <div>
-                      <p className="font-semibold text-sm" style={{ color: isDark ? "#fff" : "#3A2E2A" }}>{label}</p>
+                      <p className="font-semibold text-sm" style={{ color: isDark ? "hsl(var(--foreground))" : "#3A2E2A" }}>{label}</p>
                       <p className="text-xs mt-0.5" style={{ color: isDark ? "rgba(255,255,255,0.4)" : "rgba(58,46,42,0.5)" }}>
                         {desc}
                       </p>
@@ -302,10 +302,10 @@ const Navbar = () => {
           transition={{ duration: 0.4, delay: 0.1 }}
           className="md:hidden fixed bottom-0 left-0 right-0 z-40"
           style={{
-            backgroundColor: isDark ? "rgba(10,14,24,0.92)" : "rgba(250,246,241,0.94)",
+            backgroundColor: isDark ? "hsl(var(--background) / 0.92)" : "rgba(250,246,241,0.94)",
             backdropFilter: "blur(16px)",
             WebkitBackdropFilter: "blur(16px)",
-            borderTop: isDark ? "1px solid rgba(255,255,255,0.07)" : "1px solid rgba(58,46,42,0.1)",
+            borderTop: isDark ? "1px solid hsl(var(--border))" : "1px solid rgba(58,46,42,0.1)",
             paddingBottom: "env(safe-area-inset-bottom, 0px)",
           }}
         >
@@ -368,14 +368,14 @@ const Navbar = () => {
                   >
                     <Icon
                       className="w-5 h-5"
-                      style={{ color: active ? (isDark ? "#A78BFA" : "#4A7B6F") : (isDark ? "rgba(255,255,255,0.32)" : "rgba(58,46,42,0.35)") }}
+                      style={{ color: active ? (isDark ? "hsl(var(--primary))" : "#4A7B6F") : (isDark ? "rgba(255,255,255,0.32)" : "rgba(58,46,42,0.35)") }}
                       strokeWidth={active ? 2.2 : 1.6}
                     />
                   </motion.div>
                   <span
                     className="text-[9px] font-medium truncate w-full text-center"
                     style={{
-                      color: active ? (isDark ? "#A78BFA" : "#4A7B6F") : (isDark ? "rgba(255,255,255,0.28)" : "rgba(58,46,42,0.35)"),
+                      color: active ? (isDark ? "hsl(var(--primary))" : "#4A7B6F") : (isDark ? "rgba(255,255,255,0.28)" : "rgba(58,46,42,0.35)"),
                       letterSpacing: "0.03em",
                     }}
                   >

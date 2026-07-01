@@ -16,7 +16,7 @@ export default function TrialBanner({ daysLeft }: TrialBannerProps) {
       className="w-full flex items-center justify-center gap-3 px-4 py-2 text-sm"
       style={{ background: "hsl(var(--card))", borderBottom: "1px solid hsl(var(--border))" }}
     >
-      <span style={{ color: "#C4B5FD" }}>
+      <span style={{ color: "hsl(var(--primary))" }}>
         {daysLeft === 1
           ? "1 day left in your free trial"
           : `${daysLeft} days left in your free trial`}

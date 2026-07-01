@@ -101,7 +101,7 @@ export default function DailyCheck() {
           transition={{ duration: 0.5 }}
           className="mb-6"
         >
-          <p className="text-[10px] uppercase tracking-[0.3em] mb-1.5" style={{ color: "rgba(255,255,255,0.35)" }}>
+          <p className="text-[10px] uppercase tracking-[0.3em] mb-1.5" style={{ color: "hsl(var(--muted-foreground))" }}>
             today's ritual
           </p>
           <div className="flex items-end justify-between">
@@ -112,15 +112,15 @@ export default function DailyCheck() {
             <span
               className="text-xs font-semibold px-3 py-1 rounded-full mb-1"
               style={{
-                backgroundColor: completedCount === 3 ? "#10B981" + "22" : "rgba(255,255,255,0.06)",
-                color: completedCount === 3 ? "#10B981" : "rgba(255,255,255,0.35)",
-                border: `1px solid ${completedCount === 3 ? "#10B98144" : "rgba(255,255,255,0.08)"}`,
+                backgroundColor: completedCount === 3 ? "#10B981" + "22" : "rgba(58,46,42,0.06)",
+                color: completedCount === 3 ? "#10B981" : "hsl(var(--muted-foreground))",
+                border: `1px solid ${completedCount === 3 ? "#10B98144" : "hsl(var(--border))"}`,
               }}
             >
               {completedCount} / 3 done
             </span>
           </div>
-          <p className="mt-1 text-sm" style={{ color: "rgba(255,255,255,0.35)" }}>
+          <p className="mt-1 text-sm" style={{ color: "hsl(var(--muted-foreground))" }}>
             three steps, morning to night.
           </p>
         </motion.div>
@@ -148,10 +148,10 @@ export default function DailyCheck() {
                 style={{
                   backgroundColor: isDone
                     ? step.color + "0D"
-                    : "rgba(255,255,255,0.03)",
+                    : "rgba(58,46,42,0.03)",
                   borderColor: isDone
                     ? step.color + "40"
-                    : "rgba(255,255,255,0.07)",
+                    : "rgba(58,46,42,0.07)",
                 }}
               >
                 {/* Subtle done tint */}
@@ -184,20 +184,20 @@ export default function DailyCheck() {
                     </span>
                     <span
                       className="text-[10px] uppercase tracking-widest"
-                      style={{ color: "rgba(255,255,255,0.28)" }}
+                      style={{ color: "hsl(var(--muted-foreground))" }}
                     >
                       {step.subtitle}
                     </span>
                   </div>
                   <p
                     className="font-semibold text-base leading-snug"
-                    style={{ color: isDone ? "rgba(255,255,255,0.6)" : "white" }}
+                    style={{ color: isDone ? "hsl(var(--muted-foreground))" : "hsl(var(--foreground))" }}
                   >
                     {step.title}
                   </p>
                   <p
                     className="text-xs mt-0.5 leading-relaxed"
-                    style={{ color: "rgba(255,255,255,0.3)" }}
+                    style={{ color: "hsl(var(--muted-foreground))" }}
                   >
                     {step.description}
                   </p>
@@ -217,7 +217,7 @@ export default function DailyCheck() {
                 ) : (
                   <div
                     className="shrink-0 text-lg"
-                    style={{ color: "rgba(255,255,255,0.18)" }}
+                    style={{ color: "hsl(var(--muted-foreground))" }}
                   >
                     ›
                   </div>
@@ -242,7 +242,7 @@ export default function DailyCheck() {
             <p className="text-sm font-semibold" style={{ color: "#10B981" }}>
               All done for today ✓
             </p>
-            <p className="text-xs mt-1" style={{ color: "rgba(255,255,255,0.3)" }}>
+            <p className="text-xs mt-1" style={{ color: "hsl(var(--muted-foreground))" }}>
               See you tomorrow.
             </p>
           </motion.div>

@@ -294,13 +294,13 @@ const Settings = () => {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.18 }}
                   className="p-6 rounded-2xl mb-6"
-                  style={{ background: "linear-gradient(145deg, #151430 0%, #111128 100%)", border: "1.5px solid rgba(109,40,217,0.55)" }}
+                  style={{ background: "hsl(var(--card))", border: "1.5px solid hsl(var(--border))" }}
                 >
                   <div className="flex items-center gap-2 mb-1.5">
                     <span style={{ color: "hsl(var(--primary))" }}>✦</span>
-                    <h2 className="font-display text-base font-semibold" style={{ color: "#FFFFFF" }}>Upgrade your plan</h2>
+                    <h2 className="font-display text-base font-semibold" style={{ color: "hsl(var(--foreground))" }}>Upgrade your plan</h2>
                   </div>
-                  <p className="font-body text-sm mb-4" style={{ color: "#8B8B70" }}>
+                  <p className="font-body text-sm mb-4" style={{ color: "hsl(var(--muted-foreground))" }}>
                     {trialActive
                       ? `Your trial ends in ${trialDaysLeft} day${trialDaysLeft !== 1 ? "s" : ""}. Pick a plan to keep access.`
                       : "Your trial has ended. Subscribe to continue your wellness journey."}
@@ -318,20 +318,20 @@ const Settings = () => {
                         className="flex flex-col items-center py-4 rounded-xl font-body transition-all disabled:opacity-60 active:scale-[0.97]"
                         style={{
                           background: p.badge
-                            ? "linear-gradient(145deg, #8B5CF6 0%, #6D28D9 100%)"
-                            : "#1A1A30",
-                          border: p.badge ? "none" : "1px solid rgba(255,255,255,0.06)",
+                            ? "hsl(var(--primary))"
+                            : "hsl(var(--muted))",
+                          border: p.badge ? "none" : "1px solid hsl(var(--border))",
                           boxShadow: p.badge ? "0 4px 20px rgba(109,40,217,0.4)" : "none",
                           color: "#fff",
                         }}
                       >
                         <span className="font-bold text-lg">{p.price}</span>
-                        <span className="text-sm mt-0.5" style={{ color: p.badge ? "rgba(255,255,255,0.8)" : "#6B6B58" }}>{p.label}</span>
+                        <span className="text-sm mt-0.5" style={{ color: p.badge ? "rgba(58,46,42,0.80)" : "hsl(var(--muted-foreground))" }}>{p.label}</span>
                       </button>
                     ))}
                   </div>
                   {upgradeLoading && (
-                    <p className="text-xs mt-3 text-center" style={{ color: "#8B8B70" }}>Redirecting to checkout…</p>
+                    <p className="text-xs mt-3 text-center" style={{ color: "hsl(var(--muted-foreground))" }}>Redirecting to checkout…</p>
                   )}
                 </motion.section>
               )}

@@ -255,7 +255,7 @@ function ReliefDrawingInner() {
             style={{ borderColor: "#60A5FA", borderTopColor: "transparent", animationDirection: "reverse", animationDuration: "0.8s" }} />
         </div>
         <p className="text-foreground font-semibold">Analyzing your drawing…</p>
-        <p className="text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>Gemini is reading your strokes</p>
+        <p className="text-xs" style={{ color: "rgba(58,46,42,0.40)" }}>Gemini is reading your strokes</p>
       </motion.div>
     </div>
   );
@@ -280,7 +280,7 @@ function ReliefDrawingInner() {
             className="absolute inset-0 flex flex-col items-center justify-center z-50">
             <div className="w-8 h-8 rounded-full border-2 animate-spin mb-3"
               style={{ borderColor: "hsl(var(--primary))", borderTopColor: "transparent" }} />
-            <p className="text-sm" style={{ color: "rgba(255,255,255,0.5)" }}>Starting camera…</p>
+            <p className="text-sm" style={{ color: "rgba(58,46,42,0.50)" }}>Starting camera…</p>
           </motion.div>
         )}
       </AnimatePresence>
@@ -293,7 +293,7 @@ function ReliefDrawingInner() {
             left: cursor.x, top: cursor.y, x: "-50%", y: "-50%",
             width: mode === "erase" ? 44 : 16,
             height: mode === "erase" ? 44 : 16,
-            border: `2px solid ${mode === "draw" ? color : mode === "erase" ? "#F87171" : "rgba(255,255,255,0.5)"}`,
+            border: `2px solid ${mode === "draw" ? color : mode === "erase" ? "#F87171" : "rgba(58,46,42,0.50)"}`,
             backgroundColor: mode === "draw" ? color + "44" : "transparent",
             boxShadow: mode === "draw" ? `0 0 12px ${color}88` : "none",
           }}
@@ -307,25 +307,25 @@ function ReliefDrawingInner() {
         style={{ background: "linear-gradient(to bottom, rgba(10,10,15,0.88) 0%, transparent 100%)" }}>
         <button onClick={() => navigate("/relief")}
           className="w-9 h-9 rounded-full flex items-center justify-center"
-          style={{ background: "rgba(255,255,255,0.08)" }}>
+          style={{ background: "rgba(58,46,42,0.08)" }}>
           <X className="w-4 h-4 text-foreground" />
         </button>
 
         <div className="flex flex-col items-center">
           <span className="text-foreground text-sm font-semibold tabular-nums">{timeStr}</span>
-          <div className="w-24 h-1 rounded-full mt-1" style={{ background: "rgba(255,255,255,0.1)" }}>
+          <div className="w-24 h-1 rounded-full mt-1" style={{ background: "rgba(58,46,42,0.10)" }}>
             <div className="h-full rounded-full transition-all" style={{ width: `${progress * 100}%`, background: "hsl(var(--primary))" }} />
           </div>
         </div>
 
         <div className="flex items-center gap-2">
-          <button onClick={undo} className="w-9 h-9 rounded-full flex items-center justify-center" style={{ background: "rgba(255,255,255,0.08)" }}>
+          <button onClick={undo} className="w-9 h-9 rounded-full flex items-center justify-center" style={{ background: "rgba(58,46,42,0.08)" }}>
             <Undo2 className="w-4 h-4 text-foreground" />
           </button>
-          <button onClick={clear} className="w-9 h-9 rounded-full flex items-center justify-center" style={{ background: "rgba(255,255,255,0.08)" }}>
+          <button onClick={clear} className="w-9 h-9 rounded-full flex items-center justify-center" style={{ background: "rgba(58,46,42,0.08)" }}>
             <Trash2 className="w-4 h-4 text-foreground" />
           </button>
-          <button onClick={download} className="w-9 h-9 rounded-full flex items-center justify-center" style={{ background: "rgba(255,255,255,0.08)" }}>
+          <button onClick={download} className="w-9 h-9 rounded-full flex items-center justify-center" style={{ background: "rgba(58,46,42,0.08)" }}>
             <Download className="w-4 h-4 text-foreground" />
           </button>
         </div>
@@ -335,7 +335,7 @@ function ReliefDrawingInner() {
       <div className="absolute bottom-0 left-0 right-0 z-30 px-4 pb-6 pt-4"
         style={{ background: "linear-gradient(to top, rgba(10,10,15,0.92) 0%, transparent 100%)" }}>
 
-        <p className="text-center text-xs mb-3" style={{ color: "rgba(255,255,255,0.35)" }}>
+        <p className="text-center text-xs mb-3" style={{ color: "rgba(58,46,42,0.35)" }}>
           {mode === "draw" ? "✏️ Drawing" : mode === "erase" ? "🫥 Erasing" : "☝️ Point to draw · Pinch to erase"}
         </p>
 
@@ -360,8 +360,8 @@ function ReliefDrawingInner() {
                 className="rounded-full flex items-center justify-center transition-all"
                 style={{
                   width: 32, height: 32,
-                  background: brushSize === s ? "rgba(167,139,250,0.2)" : "rgba(255,255,255,0.06)",
-                  border: `1px solid ${brushSize === s ? "hsl(var(--primary) / 0.33)" : "rgba(255,255,255,0.08)"}`,
+                  background: brushSize === s ? "rgba(167,139,250,0.2)" : "rgba(58,46,42,0.06)",
+                  border: `1px solid ${brushSize === s ? "hsl(var(--primary) / 0.33)" : "rgba(58,46,42,0.08)"}`,
                 }}>
                 <div className="rounded-full bg-white" style={{ width: s, height: s, opacity: brushSize === s ? 1 : 0.4 }} />
               </button>

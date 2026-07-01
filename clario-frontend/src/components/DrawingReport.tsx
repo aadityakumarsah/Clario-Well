@@ -61,24 +61,24 @@ export default function DrawingReport({ data, onClose }: Props) {
       initial={{ opacity: 0, y: 24 }}
       animate={{ opacity: 1, y: 0 }}
       className="fixed inset-0 z-50 overflow-y-auto"
-      style={{ background: "#0F0E0C" }}
+      style={{ background: "hsl(var(--background))" }}
     >
       <div className="max-w-lg mx-auto px-5 pt-10 pb-28">
 
         {/* Header */}
         <div className="flex items-start justify-between mb-8">
           <div>
-            <p className="text-xs uppercase tracking-widest mb-1" style={{ color: "rgba(255,255,255,0.3)" }}>
+            <p className="text-xs uppercase tracking-widest mb-1" style={{ color: "rgba(58,46,42,0.30)" }}>
               AI Drawing Analysis
             </p>
             <h1 className="text-2xl font-bold text-foreground">Stress Report</h1>
-            <p className="text-sm mt-0.5" style={{ color: "rgba(255,255,255,0.4)" }}>
+            <p className="text-sm mt-0.5" style={{ color: "rgba(58,46,42,0.40)" }}>
               Powered by Gemini Vision
             </p>
           </div>
           <button onClick={onClose}
             className="w-9 h-9 rounded-full flex items-center justify-center shrink-0"
-            style={{ background: "rgba(255,255,255,0.08)" }}>
+            style={{ background: "rgba(58,46,42,0.08)" }}>
             <X className="w-4 h-4 text-foreground" />
           </button>
         </div>
@@ -94,7 +94,7 @@ export default function DrawingReport({ data, onClose }: Props) {
           {/* Stress dial */}
           <div className="relative shrink-0" style={{ width: 76, height: 76 }}>
             <svg viewBox="0 0 76 76" width="76" height="76">
-              <circle cx="38" cy="38" r="32" fill="none" stroke="rgba(255,255,255,0.07)" strokeWidth="6" />
+              <circle cx="38" cy="38" r="32" fill="none" stroke="rgba(58,46,42,0.07)" strokeWidth="6" />
               <circle
                 cx="38" cy="38" r="32"
                 fill="none"
@@ -116,7 +116,7 @@ export default function DrawingReport({ data, onClose }: Props) {
           <div>
             <p className="text-lg font-bold text-foreground mb-0.5">{data.mental_state}</p>
             <p className="text-xs mb-1" style={{ color: stressInfo.color }}>{stressInfo.label}</p>
-            <p className="text-xs leading-relaxed" style={{ color: "rgba(255,255,255,0.5)" }}>
+            <p className="text-xs leading-relaxed" style={{ color: "rgba(58,46,42,0.50)" }}>
               {data.drawing_analysis}
             </p>
           </div>
@@ -124,7 +124,7 @@ export default function DrawingReport({ data, onClose }: Props) {
 
         {/* Metric bars */}
         <div className="rounded-2xl p-5 mb-4"
-          style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}>
+          style={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))" }}>
           <div className="space-y-4">
             {BARS.map((b, i) => (
               <motion.div key={b.label}
@@ -134,11 +134,11 @@ export default function DrawingReport({ data, onClose }: Props) {
                 <div className="flex items-center justify-between mb-1.5">
                   <div className="flex items-center gap-2">
                     <b.Icon className="w-3.5 h-3.5" style={{ color: b.color }} />
-                    <span className="text-xs" style={{ color: "rgba(255,255,255,0.5)" }}>{b.label}</span>
+                    <span className="text-xs" style={{ color: "rgba(58,46,42,0.50)" }}>{b.label}</span>
                   </div>
                   <span className="text-xs font-semibold" style={{ color: b.color }}>{b.value}%</span>
                 </div>
-                <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.07)" }}>
+                <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(58,46,42,0.07)" }}>
                   <motion.div className="h-full rounded-full" style={{ background: b.color }}
                     initial={{ width: 0 }}
                     animate={{ width: `${b.value}%` }}
@@ -151,10 +151,10 @@ export default function DrawingReport({ data, onClose }: Props) {
 
         {/* Mood chart */}
         <div className="rounded-2xl p-5 mb-4"
-          style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}>
-          <p className="text-xs mb-3" style={{ color: "rgba(255,255,255,0.4)" }}>Mood shift during session</p>
+          style={{ background: "rgba(58,46,42,0.03)", border: "1px solid rgba(58,46,42,0.07)" }}>
+          <p className="text-xs mb-3" style={{ color: "rgba(58,46,42,0.40)" }}>Mood shift during session</p>
           <div className="flex items-center gap-3">
-            <span className="text-xs tabular-nums w-8 text-right" style={{ color: "rgba(255,255,255,0.3)" }}>
+            <span className="text-xs tabular-nums w-8 text-right" style={{ color: "rgba(58,46,42,0.30)" }}>
               {data.mood_before}/10
             </span>
             <div className="flex-1">
@@ -172,7 +172,7 @@ export default function DrawingReport({ data, onClose }: Props) {
                     cx={(i / (moodPoints.length - 1)) * chartW}
                     cy={chartH - (Math.min(10, Math.max(0, v)) / 10) * chartH}
                     r="3"
-                    fill={i === moodPoints.length - 1 ? "#34D399" : i === 0 ? "#F87171" : "rgba(255,255,255,0.4)"}
+                    fill={i === moodPoints.length - 1 ? "#34D399" : i === 0 ? "#F87171" : "rgba(58,46,42,0.40)"}
                   />
                 ))}
               </svg>
@@ -182,18 +182,18 @@ export default function DrawingReport({ data, onClose }: Props) {
             </span>
           </div>
           <div className="flex justify-between px-11 mt-0.5">
-            <span className="text-[10px]" style={{ color: "rgba(255,255,255,0.2)" }}>before</span>
-            <span className="text-[10px]" style={{ color: "rgba(255,255,255,0.2)" }}>after</span>
+            <span className="text-[10px]" style={{ color: "rgba(58,46,42,0.20)" }}>before</span>
+            <span className="text-[10px]" style={{ color: "rgba(58,46,42,0.20)" }}>after</span>
           </div>
         </div>
 
         {/* Gemini insights */}
         {data.insights.length > 0 && (
           <div className="rounded-2xl p-5 mb-4"
-            style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}>
+            style={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))" }}>
             <div className="flex items-center gap-2 mb-3">
               <Brain className="w-3.5 h-3.5" style={{ color: "hsl(var(--primary))" }} />
-              <p className="text-xs uppercase tracking-wider" style={{ color: "rgba(255,255,255,0.3)" }}>
+              <p className="text-xs uppercase tracking-wider" style={{ color: "rgba(58,46,42,0.30)" }}>
                 Gemini insights
               </p>
             </div>
@@ -204,7 +204,7 @@ export default function DrawingReport({ data, onClose }: Props) {
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.5 + i * 0.1 }}
                   className="text-sm leading-relaxed"
-                  style={{ color: "rgba(255,255,255,0.6)" }}>
+                  style={{ color: "rgba(58,46,42,0.60)" }}>
                   <span style={{ color: "hsl(var(--primary))" }}>·</span> {text}
                 </motion.p>
               ))}
@@ -219,7 +219,7 @@ export default function DrawingReport({ data, onClose }: Props) {
             <p className="text-xs uppercase tracking-wider mb-2" style={{ color: "rgba(52,211,153,0.6)" }}>
               Recommendation
             </p>
-            <p className="text-sm leading-relaxed" style={{ color: "rgba(255,255,255,0.7)" }}>
+            <p className="text-sm leading-relaxed" style={{ color: "rgba(58,46,42,0.70)" }}>
               {data.recommendation}
             </p>
           </div>

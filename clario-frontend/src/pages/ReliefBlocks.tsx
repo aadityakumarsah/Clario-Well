@@ -411,7 +411,7 @@ function ReliefBlocksInner() {
             className="w-8 h-8 rounded-full border-2 animate-spin mb-3"
             style={{ borderColor: "#69C362", borderTopColor: "transparent" }}
           />
-          <p className="text-sm" style={{ color: "rgba(255,255,255,0.5)" }}>
+          <p className="text-sm" style={{ color: "rgba(58,46,42,0.50)" }}>
             Starting camera…
           </p>
         </div>
@@ -425,7 +425,7 @@ function ReliefBlocksInner() {
         <button
           onClick={() => navigate("/relief")}
           className="flex items-center gap-1.5 px-3 py-2 rounded-full text-sm"
-          style={{ background: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.7)" }}
+          style={{ background: "rgba(58,46,42,0.10)", color: "rgba(58,46,42,0.70)" }}
         >
           <ArrowLeft className="w-4 h-4" />
           Back
@@ -433,7 +433,7 @@ function ReliefBlocksInner() {
 
         <div className="text-center">
           <div className="text-foreground font-bold text-base">🧱 {blockCount}</div>
-          <div className="text-xs tabular-nums" style={{ color: "rgba(255,255,255,0.38)" }}>
+          <div className="text-xs tabular-nums" style={{ color: "rgba(58,46,42,0.38)" }}>
             {gestureLabel()}
           </div>
         </div>
@@ -441,9 +441,9 @@ function ReliefBlocksInner() {
         <button
           onClick={clearAll}
           className="w-9 h-9 rounded-full flex items-center justify-center"
-          style={{ background: "rgba(255,255,255,0.08)" }}
+          style={{ background: "rgba(58,46,42,0.08)" }}
         >
-          <Trash2 className="w-4 h-4" style={{ color: "rgba(255,255,255,0.45)" }} />
+          <Trash2 className="w-4 h-4" style={{ color: "rgba(58,46,42,0.45)" }} />
         </button>
       </div>
 
@@ -481,7 +481,7 @@ function ReliefBlocksInner() {
                 width:  selType === i ? 38 : 28,
                 height: selType === i ? 38 : 28,
                 background: `linear-gradient(145deg, ${bt.top}, ${bt.rgt})`,
-                border: selType === i ? "2.5px solid white" : "2px solid rgba(255,255,255,0.15)",
+                border: selType === i ? "2.5px solid white" : "2px solid rgba(58,46,42,0.15)",
                 boxShadow: selType === i ? `0 0 14px ${bt.top}99` : "none",
                 transition: "all 0.18s",
               }}
@@ -491,7 +491,7 @@ function ReliefBlocksInner() {
 
         <div
           className="flex gap-4 px-5 py-2 rounded-2xl text-xs"
-          style={{ background: "rgba(0,0,0,0.5)", color: "rgba(255,255,255,0.45)" }}
+          style={{ background: "rgba(0,0,0,0.5)", color: "rgba(58,46,42,0.45)" }}
         >
           <span>✊ Pinch = place</span>
           <span>🖐 Palm = delete</span>

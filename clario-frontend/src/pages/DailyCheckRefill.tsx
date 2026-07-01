@@ -87,7 +87,7 @@ export default function DailyCheckRefill() {
 
           // Angle label near knee
           ctx.font = "bold 18px system-ui";
-          ctx.fillStyle = "rgba(255,255,255,0.8)";
+          ctx.fillStyle = "rgba(58,46,42,0.80)";
           ctx.fillText(
             Math.round(angle) + "°",
             leftKnee.x * W + 14,
@@ -162,7 +162,7 @@ export default function DailyCheckRefill() {
           type="button"
           onClick={() => navigate("/daily-check")}
           className="flex items-center gap-2 text-sm font-medium transition-opacity hover:opacity-70"
-          style={{ color: "rgba(255,255,255,0.4)" }}
+          style={{ color: "rgba(58,46,42,0.40)" }}
         >
           <ArrowLeft className="w-4 h-4" />
           back
@@ -177,7 +177,7 @@ export default function DailyCheckRefill() {
         <h1 className="text-3xl font-bold text-foreground" style={{ letterSpacing: "-0.4px" }}>
           5 Squats
         </h1>
-        <p className="mt-1.5 text-sm" style={{ color: "rgba(255,255,255,0.38)" }}>
+        <p className="mt-1.5 text-sm" style={{ color: "rgba(58,46,42,0.38)" }}>
           Stand back so your full body is visible. Squat down past 90°, stand back up.
         </p>
       </div>
@@ -185,11 +185,11 @@ export default function DailyCheckRefill() {
       <div className="flex-1 flex flex-col lg:flex-row gap-5 px-5 pb-10">
         {/* Camera feed */}
         <div className="relative flex-1 rounded-2xl overflow-hidden bg-black min-h-[300px]"
-          style={{ border: "1px solid rgba(255,255,255,0.08)" }}
+          style={{ border: "1px solid rgba(58,46,42,0.08)" }}
         >
           {!loaded && (
             <div className="absolute inset-0 flex flex-col items-center justify-center z-10"
-              style={{ backgroundColor: "rgba(6,15,30,0.9)" }}
+              style={{ backgroundColor: "hsl(var(--background))" }}
             >
               <div
                 className="w-10 h-10 rounded-full border-2 border-t-transparent animate-spin mb-3"
@@ -215,7 +215,7 @@ export default function DailyCheckRefill() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 className="absolute inset-0 flex flex-col items-center justify-center z-20"
-                style={{ backgroundColor: "rgba(6,15,30,0.88)", backdropFilter: "blur(8px)" }}
+                style={{ backgroundColor: "hsl(var(--background))", backdropFilter: "blur(8px)" }}
               >
                 <motion.div
                   initial={{ scale: 0.6, opacity: 0 }}
@@ -230,7 +230,7 @@ export default function DailyCheckRefill() {
                     ✓
                   </div>
                   <p className="text-foreground text-2xl font-bold">Set complete!</p>
-                  <p className="text-sm" style={{ color: "rgba(255,255,255,0.45)" }}>
+                  <p className="text-sm" style={{ color: "rgba(58,46,42,0.45)" }}>
                     5 squats done — body refilled.
                   </p>
                   <div className="flex gap-3 mt-2">
@@ -239,9 +239,9 @@ export default function DailyCheckRefill() {
                       onClick={reset}
                       className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-opacity hover:opacity-70"
                       style={{
-                        backgroundColor: "rgba(255,255,255,0.07)",
-                        border: "1px solid rgba(255,255,255,0.1)",
-                        color: "rgba(255,255,255,0.6)",
+                        backgroundColor: "rgba(58,46,42,0.07)",
+                        border: "1px solid rgba(58,46,42,0.10)",
+                        color: "rgba(58,46,42,0.60)",
                       }}
                     >
                       <RotateCcw className="w-3.5 h-3.5" />
@@ -268,19 +268,19 @@ export default function DailyCheckRefill() {
           <div
             className="flex-1 lg:flex-none rounded-2xl p-5"
             style={{
-              backgroundColor: "rgba(255,255,255,0.04)",
-              border: "1px solid rgba(255,255,255,0.07)",
+              backgroundColor: "rgba(58,46,42,0.04)",
+              border: "1px solid rgba(58,46,42,0.07)",
             }}
           >
-            <p className="text-[10px] uppercase tracking-widest mb-2" style={{ color: "rgba(255,255,255,0.35)" }}>
+            <p className="text-[10px] uppercase tracking-widest mb-2" style={{ color: "rgba(58,46,42,0.35)" }}>
               reps
             </p>
             <div className="flex items-baseline gap-1.5">
               <span className="text-5xl font-black" style={{ color: ACCENT }}>{count}</span>
-              <span className="text-xl font-medium" style={{ color: "rgba(255,255,255,0.25)" }}>/ {TARGET}</span>
+              <span className="text-xl font-medium" style={{ color: "rgba(58,46,42,0.25)" }}>/ {TARGET}</span>
             </div>
             {/* Progress bar */}
-            <div className="mt-4 h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: "rgba(255,255,255,0.07)" }}>
+            <div className="mt-4 h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: "rgba(58,46,42,0.07)" }}>
               <motion.div
                 className="h-full rounded-full"
                 style={{ backgroundColor: ACCENT }}
@@ -294,11 +294,11 @@ export default function DailyCheckRefill() {
           <div
             className="flex-1 lg:flex-none rounded-2xl p-5"
             style={{
-              backgroundColor: "rgba(255,255,255,0.04)",
-              border: "1px solid rgba(255,255,255,0.07)",
+              backgroundColor: "rgba(58,46,42,0.04)",
+              border: "1px solid rgba(58,46,42,0.07)",
             }}
           >
-            <p className="text-[10px] uppercase tracking-widest mb-3" style={{ color: "rgba(255,255,255,0.35)" }}>
+            <p className="text-[10px] uppercase tracking-widest mb-3" style={{ color: "rgba(58,46,42,0.35)" }}>
               position
             </p>
             <div className="flex lg:flex-col gap-2">
@@ -309,7 +309,7 @@ export default function DailyCheckRefill() {
                   style={
                     stage === s
                       ? { backgroundColor: ACCENT + "22", color: ACCENT, border: `1px solid ${ACCENT}55` }
-                      : { backgroundColor: "rgba(255,255,255,0.04)", color: "rgba(255,255,255,0.2)", border: "1px solid transparent" }
+                      : { backgroundColor: "rgba(58,46,42,0.04)", color: "rgba(58,46,42,0.20)", border: "1px solid transparent" }
                   }
                 >
                   {s}
