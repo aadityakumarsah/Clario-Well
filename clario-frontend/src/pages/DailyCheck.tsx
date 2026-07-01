@@ -87,7 +87,7 @@ export default function DailyCheck() {
       <Navbar />
 
       {/* ── Garden scene section ─────────────────────────────────────── */}
-      <div className="relative w-full shrink-0" style={{ paddingTop: "56px" /* navbar height */ }}>
+      <div className="relative w-full shrink-0 px-4 md:px-6" style={{ paddingTop: "64px" }}>
         <GardenScene completed={completedCount} />
       </div>
 

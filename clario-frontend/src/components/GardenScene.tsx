@@ -136,11 +136,23 @@ export default function GardenScene({ completed, dayCount = 1 }: GardenSceneProp
   const hasFrog    = dayCount >= 90;
 
   return (
+    /* Outer frame — adds the warm border and rounded corners on desktop */
+    <div
+      style={{
+        width: "100%",
+        maxWidth: 720,
+        margin: "0 auto",
+        borderRadius: 20,
+        overflow: "hidden",
+        border: "1.5px solid hsl(var(--border))",
+        boxShadow: "0 4px 24px -4px rgba(58,46,42,0.10), 0 1px 4px rgba(58,46,42,0.06)",
+      }}
+    >
     <div
       style={{
         position: "relative",
         width: "100%",
-        height: 240,
+        height: 280,
         overflow: "hidden",
         backgroundColor: "#E8DFC8",
         backgroundImage: "url(/garden/nc-garden-bg.png)",
@@ -148,12 +160,22 @@ export default function GardenScene({ completed, dayCount = 1 }: GardenSceneProp
         backgroundPosition: "center bottom",
       }}
     >
+      {/* Subtle vignette — top corners */}
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          background: "linear-gradient(160deg, rgba(58,46,42,0.04) 0%, transparent 40%)",
+          zIndex: 29,
+          pointerEvents: "none",
+        }}
+      />
       {/* Gradient fade into page bg at bottom */}
       <div
         style={{
           position: "absolute",
           inset: 0,
-          background: "linear-gradient(to bottom, transparent 60%, hsl(var(--background)) 100%)",
+          background: "linear-gradient(to bottom, transparent 55%, rgba(232,223,200,0.8) 100%)",
           zIndex: 30,
           pointerEvents: "none",
         }}
@@ -234,6 +256,7 @@ export default function GardenScene({ completed, dayCount = 1 }: GardenSceneProp
 
       {/* Moving bee (day 7+) */}
       <MovingBee visible={hasBee} />
+    </div>
     </div>
   );
 }
