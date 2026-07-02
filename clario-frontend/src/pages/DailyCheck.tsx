@@ -400,7 +400,7 @@ export default function DailyCheck() {
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
-          className="px-5 pt-4 pb-3"
+          className="px-5 pt-2 pb-2"
         >
           <p className="text-[10px] uppercase tracking-[0.25em] mb-0.5" style={{ color: "hsl(var(--muted-foreground))" }}>
             today's ritual
