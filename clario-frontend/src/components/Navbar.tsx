@@ -141,9 +141,10 @@ const Navbar = () => {
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between gap-4">
           <Link
             to="/dashboard"
-            className="font-display text-2xl font-semibold tracking-tight text-foreground hover:text-primary transition-colors duration-200 shrink-0"
+            className="flex items-center gap-2 hover:opacity-85 transition-opacity duration-200 shrink-0"
           >
-            Clario
+            <img src="/logo.svg" alt="Clario" className="w-8 h-8" />
+            <span className="font-display text-2xl font-semibold tracking-tight text-foreground">Clario</span>
           </Link>
 
           <div className="flex items-center gap-7 flex-1 justify-center">
@@ -189,9 +190,10 @@ const Navbar = () => {
         <div className="md:hidden fixed top-0 left-0 right-0 z-40 backdrop-blur-md bg-background/85 border-b border-border/40 flex items-center justify-between px-4 py-3">
           <Link
             to="/dashboard"
-            className="font-display text-xl font-semibold tracking-tight text-foreground"
+            className="flex items-center gap-2"
           >
-            Clario
+            <img src="/logo.svg" alt="Clario" className="w-7 h-7" />
+            <span className="font-display text-xl font-semibold tracking-tight text-foreground">Clario</span>
           </Link>
           <div className="flex items-center gap-1">
             <button
