@@ -363,38 +363,8 @@ export default function DailyCheck() {
     <div className="min-h-screen" style={{ backgroundColor: "hsl(var(--background))" }}>
       <Navbar />
 
-      {/* ── Greeting bar ──────────────────────────────────────────────────────
-          Mobile: full-width sticky top bar
-          Desktop: inside the centered container, not sticky            */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.4 }}
-      >
-        {/* Mobile greeting — full-width, sticky */}
-        <div
-          className="md:hidden flex items-center justify-between px-5 py-3 sticky top-0 z-20"
-          style={{ backgroundColor: "hsl(var(--background))", borderBottom: "1px solid hsl(var(--border))" }}
-        >
-          <span className="text-lg font-semibold" style={{ color: "hsl(var(--foreground))", letterSpacing: "-0.2px" }}>
-            Hey, {firstName ? firstName.charAt(0).toUpperCase() + firstName.slice(1).toLowerCase() : "there"}
-          </span>
-          <span
-            className="text-xs font-semibold px-3 py-1 rounded-full"
-            style={{
-              backgroundColor: completedCount === 3 ? "rgba(93,176,117,0.15)" : "rgba(58,46,42,0.06)",
-              color:            completedCount === 3 ? "#3A7A50" : "hsl(var(--muted-foreground))",
-              border: `1px solid ${completedCount === 3 ? "rgba(93,176,117,0.4)" : "hsl(var(--border))"}`,
-            }}
-          >
-            {completedCount} / 3 done
-          </span>
-        </div>
-      </motion.div>
-
       {/* ── Mobile layout: single column ─────────────────────────────────── */}
-      {/* pt-14 = height of the mobile top strip (fixed) */}
-      <div className="md:hidden pt-14 pb-20">
+      <div className="md:hidden pt-2 pb-20">
         {/* Greeting above garden */}
         <motion.div
           initial={{ opacity: 0, y: 8 }}
