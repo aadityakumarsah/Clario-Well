@@ -395,6 +395,23 @@ export default function DailyCheck() {
       {/* ── Mobile layout: single column ─────────────────────────────────── */}
       {/* pt-14 = height of the mobile top strip (fixed) */}
       <div className="md:hidden pt-14 pb-20">
+        {/* Greeting above garden */}
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="px-5 pt-4 pb-3"
+        >
+          <p className="text-[10px] uppercase tracking-[0.25em] mb-0.5" style={{ color: "hsl(var(--muted-foreground))" }}>
+            today's ritual
+          </p>
+          <h2 className="text-2xl font-bold" style={{ color: "hsl(var(--foreground))", letterSpacing: "-0.3px" }}>
+            {firstName
+              ? `Hey, ${firstName.charAt(0).toUpperCase() + firstName.slice(1).toLowerCase()} 👋`
+              : "Hey there 👋"}
+          </h2>
+        </motion.div>
+
         <div className="w-full overflow-hidden" style={{ borderBottom: "1px solid hsl(var(--border))", borderBottomLeftRadius: 28, borderBottomRightRadius: 28, backgroundColor: "hsl(var(--card))" }}>
           <GardenScene completed={completedCount} completedKeys={completedKeys} />
 
