@@ -364,7 +364,7 @@ export default function DailyCheck() {
       <Navbar />
 
       {/* ── Mobile layout: single column ─────────────────────────────────── */}
-      <div className="md:hidden pt-2 pb-20">
+      <div className="md:hidden pt-16 pb-20">
         {/* Greeting above garden */}
         <motion.div
           initial={{ opacity: 0, y: 8 }}
