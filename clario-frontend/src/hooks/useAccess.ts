@@ -84,7 +84,9 @@ export function useAccess(): AccessState {
   const isPremium = sub.active;
 
   return {
-    hasAccess:     trialActive || isPremium,
+    // Require a real authenticated user — a cached/forged subscription in
+    // localStorage must never grant access on its own.
+    hasAccess:     !!user && (trialActive || isPremium),
     isPremium,
     trialDaysLeft,
     trialTimeLabel,

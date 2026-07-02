@@ -18,6 +18,7 @@ import {
 import { SESSION_LANGUAGES, type SessionLanguage } from "@/lib/sessionLanguage";
 import { useAccess } from "@/hooks/useAccess";
 import { useAuth } from "@/contexts/AuthContext";
+import { hasFreeSessionBeenUsed, markFreeSessionUsed } from "@/lib/freeSession";
 import { useNavigate } from "react-router-dom";
 
 const fadeUp = {
@@ -54,8 +55,9 @@ const Dashboard = () => {
   const { displayName } = useAuth();
   const navigate = useNavigate();
   const isPaidUser = !accessLoading && isPremium;
-  // Fail-closed: locked while loading OR when user hasn't paid (trial doesn't unlock voice)
-  const voiceLocked = accessLoading || !isPremium;
+
+  const [freeUsed, setFreeUsed] = useState(() => hasFreeSessionBeenUsed());
+  const voiceLocked = accessLoading || (!isPremium && freeUsed);
 
   const [pastCards, setPastCards] = useState<PastSessionCardModel[]>([]);
   const [pastSessionsLoading, setPastSessionsLoading] = useState(true);
@@ -199,7 +201,9 @@ const Dashboard = () => {
                       <Lock className="w-7 h-7" style={{ color: "hsl(var(--primary))", opacity: 0.7 }} />
                     </div>
                     <p className="font-body text-sm text-muted-foreground">
-                      Voice agent is a premium feature
+                      {freeUsed
+                        ? "You've used your free session — upgrade for unlimited"
+                        : "Voice agent is a premium feature"}
                     </p>
                     <button
                       onClick={() => navigate("/paywall")}
@@ -214,6 +218,7 @@ const Dashboard = () => {
                     <button
                       onClick={() => {
                         const selectedPersonaObj = PERSONAS.find(p => p.id === selectedPersona) || PERSONAS[0];
+                        if (!isPremium) { markFreeSessionUsed(); setFreeUsed(true); }
                         startSession(selectedPersona, selectedVoice, selectedPersonaObj.greeting, selectedLanguage);
                       }}
                       className="w-20 h-20 rounded-full flex items-center justify-center transition-all duration-300 bg-primary/10 text-primary hover:bg-primary/20 hover:scale-105 my-2"

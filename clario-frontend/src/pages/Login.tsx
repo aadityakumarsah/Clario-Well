@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/lib/supabase";
+import { validateEmail } from "@/lib/validateEmail";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { Eye, EyeOff, Leaf } from "lucide-react";
@@ -58,6 +59,11 @@ export default function Login() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const check = validateEmail(email);
+    if (!check.valid) {
+      toast({ title: "Invalid email", description: check.reason, variant: "destructive" });
+      return;
+    }
     setLoading(true);
     try {
       if (mode === "login") {
