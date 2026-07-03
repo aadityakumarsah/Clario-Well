@@ -13,6 +13,7 @@ import type { SettingsData } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAccess } from "@/hooks/useAccess";
 import { createCheckoutSession } from "@/lib/subscription";
+import { initiateNepalPayment, NPR_LABELS, type NepalPlan } from "@/lib/nepal_payments";
 import { isTrialActive, getTrialDaysLeft } from "@/lib/trial";
 import { supabase } from "@/lib/supabase";
 
@@ -62,6 +63,8 @@ const Settings = () => {
   const { user, signOut } = useAuth();
   const { isPremium, trialDaysLeft, plan: subPlan, expiresAt } = useAccess();
   const [upgradeLoading, setUpgradeLoading] = useState(false);
+  const [isNepalUpgrade, setIsNepalUpgrade] = useState(false);
+  const [khaltiUpgradeLoading, setKhaltiUpgradeLoading] = useState(false);
 
   // ── Profile editing state ──────────────────────────────────────────────────
   type ProfileField = "name" | "email";
@@ -140,6 +143,18 @@ const Settings = () => {
       window.location.href = url;
     } catch {
       setUpgradeLoading(false);
+    }
+  };
+
+  const handleKhaltiUpgrade = async (plan: NepalPlan) => {
+    setKhaltiUpgradeLoading(true);
+    try {
+      const result = await initiateNepalPayment(plan, "khalti");
+      window.location.href = result.action_url;
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Khalti checkout failed";
+      toast.error(msg);
+      setKhaltiUpgradeLoading(false);
     }
   };
 
@@ -305,39 +320,116 @@ const Settings = () => {
                       ? `Your trial ends in ${trialDaysLeft} day${trialDaysLeft !== 1 ? "s" : ""}. Pick a plan to keep access.`
                       : "Your trial has ended. Subscribe to continue your wellness journey."}
                   </p>
-                  <div className="grid grid-cols-3 gap-2">
-                    {([
-                      { id: "weekly" as const, label: "Weekly", price: "$3", sub: "/week", badge: false },
-                      { id: "monthly" as const, label: "Monthly", price: "$10", sub: "/month", badge: true },
-                      { id: "yearly" as const, label: "Yearly", price: "$198", sub: "/year", badge: false },
-                    ]).map((p) => (
-                      <button
-                        key={p.id}
-                        onClick={() => handleUpgrade(p.id)}
-                        disabled={upgradeLoading}
-                        className="flex flex-col items-center py-4 rounded-xl font-body transition-all disabled:opacity-60 active:scale-[0.97]"
-                        style={{
-                          background: p.badge ? "hsl(var(--primary))" : "hsl(var(--background))",
-                          border: p.badge
-                            ? "1.5px solid hsl(var(--primary))"
-                            : "1.5px solid hsl(var(--border))",
-                          boxShadow: p.badge ? "0 4px 16px rgba(74,123,111,0.22)" : "none",
-                        }}
-                      >
-                        <span className="font-bold text-xl" style={{ color: p.badge ? "#fff" : "hsl(var(--foreground))" }}>
-                          {p.price}
-                        </span>
-                        <span className="text-[11px] mt-0.5" style={{ color: p.badge ? "rgba(255,255,255,0.75)" : "hsl(var(--muted-foreground))" }}>
-                          {p.sub}
-                        </span>
-                        <span className="text-xs font-medium mt-1.5" style={{ color: p.badge ? "rgba(255,255,255,0.9)" : "hsl(var(--foreground))" }}>
-                          {p.label}
-                        </span>
-                      </button>
-                    ))}
+
+                  {/* Nepal toggle */}
+                  <div
+                    className="flex items-center gap-3 px-4 py-3 rounded-xl mb-4"
+                    style={{ background: "hsl(var(--background))", border: "1px solid hsl(var(--border))" }}
+                  >
+                    <span className="text-lg">🇳🇵</span>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium" style={{ color: "hsl(var(--foreground))" }}>Paying from Nepal?</p>
+                      <p className="text-xs" style={{ color: "hsl(var(--muted-foreground))" }}>Pay with Khalti in NPR</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setIsNepalUpgrade(v => !v)}
+                      className="relative w-11 h-6 rounded-full transition-colors duration-200 focus:outline-none"
+                      style={{ background: isNepalUpgrade ? "hsl(var(--primary))" : "hsl(var(--muted))" }}
+                      aria-checked={isNepalUpgrade}
+                      role="switch"
+                    >
+                      <span
+                        className="absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-200"
+                        style={{ transform: isNepalUpgrade ? "translateX(20px)" : "translateX(0)" }}
+                      />
+                    </button>
                   </div>
-                  {upgradeLoading && (
-                    <p className="text-xs mt-3 text-center" style={{ color: "hsl(var(--muted-foreground))" }}>Redirecting to checkout…</p>
+
+                  <AnimatePresence mode="wait">
+                    {isNepalUpgrade ? (
+                      /* Khalti NPR plans */
+                      <motion.div
+                        key="khalti"
+                        initial={{ opacity: 0, y: 6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 6 }}
+                        transition={{ duration: 0.18 }}
+                        className="grid grid-cols-3 gap-2"
+                      >
+                        {([
+                          { id: "weekly" as NepalPlan,  nprLabel: NPR_LABELS.weekly,  label: "Weekly",  badge: false },
+                          { id: "monthly" as NepalPlan, nprLabel: NPR_LABELS.monthly, label: "Monthly", badge: true  },
+                          { id: "yearly" as NepalPlan,  nprLabel: NPR_LABELS.yearly,  label: "Yearly",  badge: false },
+                        ]).map((p) => (
+                          <button
+                            key={p.id}
+                            onClick={() => handleKhaltiUpgrade(p.id)}
+                            disabled={khaltiUpgradeLoading}
+                            className="flex flex-col items-center py-4 rounded-xl font-body transition-all disabled:opacity-60 active:scale-[0.97]"
+                            style={{
+                              background: p.badge ? "hsl(var(--primary))" : "hsl(var(--background))",
+                              border: p.badge ? "1.5px solid hsl(var(--primary))" : "1.5px solid hsl(var(--border))",
+                              boxShadow: p.badge ? "0 4px 16px rgba(74,123,111,0.22)" : "none",
+                            }}
+                          >
+                            <span className="font-bold text-base leading-tight" style={{ color: p.badge ? "#fff" : "hsl(var(--foreground))" }}>
+                              {p.nprLabel.split(" / ")[0]}
+                            </span>
+                            <span className="text-[10px] mt-0.5" style={{ color: p.badge ? "rgba(255,255,255,0.75)" : "hsl(var(--muted-foreground))" }}>
+                              /{p.nprLabel.split(" / ")[1]}
+                            </span>
+                            <span className="text-xs font-medium mt-1.5" style={{ color: p.badge ? "rgba(255,255,255,0.9)" : "hsl(var(--foreground))" }}>
+                              {p.label}
+                            </span>
+                          </button>
+                        ))}
+                      </motion.div>
+                    ) : (
+                      /* Dodo USD plans */
+                      <motion.div
+                        key="dodo"
+                        initial={{ opacity: 0, y: 6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 6 }}
+                        transition={{ duration: 0.18 }}
+                        className="grid grid-cols-3 gap-2"
+                      >
+                        {([
+                          { id: "weekly" as const,  label: "Weekly",  price: "$3",   sub: "/week",  badge: false },
+                          { id: "monthly" as const, label: "Monthly", price: "$10",  sub: "/month", badge: true  },
+                          { id: "yearly" as const,  label: "Yearly",  price: "$198", sub: "/year",  badge: false },
+                        ]).map((p) => (
+                          <button
+                            key={p.id}
+                            onClick={() => handleUpgrade(p.id)}
+                            disabled={upgradeLoading}
+                            className="flex flex-col items-center py-4 rounded-xl font-body transition-all disabled:opacity-60 active:scale-[0.97]"
+                            style={{
+                              background: p.badge ? "hsl(var(--primary))" : "hsl(var(--background))",
+                              border: p.badge ? "1.5px solid hsl(var(--primary))" : "1.5px solid hsl(var(--border))",
+                              boxShadow: p.badge ? "0 4px 16px rgba(74,123,111,0.22)" : "none",
+                            }}
+                          >
+                            <span className="font-bold text-xl" style={{ color: p.badge ? "#fff" : "hsl(var(--foreground))" }}>
+                              {p.price}
+                            </span>
+                            <span className="text-[11px] mt-0.5" style={{ color: p.badge ? "rgba(255,255,255,0.75)" : "hsl(var(--muted-foreground))" }}>
+                              {p.sub}
+                            </span>
+                            <span className="text-xs font-medium mt-1.5" style={{ color: p.badge ? "rgba(255,255,255,0.9)" : "hsl(var(--foreground))" }}>
+                              {p.label}
+                            </span>
+                          </button>
+                        ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  {(upgradeLoading || khaltiUpgradeLoading) && (
+                    <p className="text-xs mt-3 text-center" style={{ color: "hsl(var(--muted-foreground))" }}>
+                      {khaltiUpgradeLoading ? "Redirecting to Khalti…" : "Redirecting to checkout…"}
+                    </p>
                   )}
                 </motion.section>
               )}
