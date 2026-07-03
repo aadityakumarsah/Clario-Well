@@ -6,3 +6,4 @@ from .tts import tts_router
 from .relief import relief_router
 from .payments import payments_router
 from .avatar import avatar_router
+from .nepal_payments import nepal_payments_router

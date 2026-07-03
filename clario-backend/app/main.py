@@ -8,7 +8,7 @@ load_dotenv(Path(__file__).parent.parent / ".env")
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from app.routers import websocket_router, auth_router, settings_router, sessions_router, tts_router, relief_router, payments_router, avatar_router
+from app.routers import websocket_router, auth_router, settings_router, sessions_router, tts_router, relief_router, payments_router, avatar_router, nepal_payments_router
 from app.routers.daily_checks import daily_checks_router
 from app.core.database import init_db
 from app.db.subscriptions import init_subscriptions_table
@@ -68,6 +68,7 @@ app.include_router(relief_router)
 app.include_router(payments_router)
 app.include_router(avatar_router)
 app.include_router(daily_checks_router)
+app.include_router(nepal_payments_router)
 
 @app.api_route("/", methods=["GET", "HEAD"], tags=['Root'])
 def read_root():

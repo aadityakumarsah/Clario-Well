@@ -2,7 +2,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { createCheckoutSession } from "@/lib/subscription";
-import { initiateNepalPayment, submitEsewaForm, NPR_LABELS, type NepalPlan, type NepalGateway } from "@/lib/nepal_payments";
+import { initiateNepalPayment, NPR_LABELS, type NepalPlan, type NepalGateway } from "@/lib/nepal_payments";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAccess } from "@/hooks/useAccess";
@@ -247,7 +247,7 @@ const NEPAL_PLANS: { id: NepalPlan; label: string; nprLabel: string; description
 
 function PlanCards() {
   const [isNepal, setIsNepal] = useState(false);
-  const [nepalGateway, setNepalGateway] = useState<NepalGateway>("esewa");
+  const nepalGateway: NepalGateway = "khalti";
   const [loadingPlan, setLoadingPlan] = useState<Plan | null>(null);
   const [wakingUp, setWakingUp] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -272,10 +272,24 @@ function PlanCards() {
     }
   };
 
-  // ── Nepal checkout (eSewa / Khalti) — coming soon ─────────────────────────
-  const handleNepalSelect = (_plan: NepalPlan) => {
-    const name = nepalGateway === "esewa" ? "eSewa" : "Khalti";
-    setError(`${name} payments are coming soon! We'll notify you when it's ready.`);
+  // ── Nepal checkout (Khalti) ────────────────────────────────────────────────
+  const handleNepalSelect = async (_plan: NepalPlan) => {
+    setLoadingPlan(_plan as unknown as Plan);
+    setWakingUp(false);
+    setError(null);
+    const wakeTimer = setTimeout(() => setWakingUp(true), 5000);
+
+    try {
+      const result = await initiateNepalPayment(_plan, "khalti");
+      clearTimeout(wakeTimer);
+      window.location.href = result.action_url;
+    } catch (err: unknown) {
+      clearTimeout(wakeTimer);
+      const msg = err instanceof Error ? err.message : "Something went wrong";
+      setError(msg);
+      setLoadingPlan(null);
+      setWakingUp(false);
+    }
   };
 
   return (
@@ -296,7 +310,7 @@ function PlanCards() {
             Paying from Nepal?
           </p>
           <p className="text-xs" style={{ color: "hsl(var(--muted-foreground))" }}>
-            Use eSewa or Khalti in NPR
+            Pay with Khalti in NPR
           </p>
         </div>
         <button
@@ -314,38 +328,7 @@ function PlanCards() {
         </button>
       </div>
 
-      {/* ── Gateway picker (Nepal mode only) ─────────────────────────────── */}
-      <AnimatePresence>
-        {isNepal && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            className="w-full max-w-sm overflow-hidden"
-          >
-            <div
-              className="flex rounded-xl p-1"
-              style={{ background: "hsl(var(--muted))" }}
-            >
-              {(["esewa", "khalti"] as NepalGateway[]).map((gw) => (
-                <button
-                  key={gw}
-                  type="button"
-                  onClick={() => setNepalGateway(gw)}
-                  className="flex-1 py-2 rounded-lg text-sm font-semibold transition-all duration-150 flex items-center justify-center gap-1.5"
-                  style={{
-                    background: nepalGateway === gw ? "hsl(var(--background))" : "transparent",
-                    color: nepalGateway === gw ? "hsl(var(--foreground))" : "hsl(var(--muted-foreground))",
-                    boxShadow: nepalGateway === gw ? "0 1px 4px rgba(58,46,42,0.08)" : "none",
-                  }}
-                >
-                  {gw === "esewa" ? "🟢 eSewa" : "🟣 Khalti"}
-                </button>
-              ))}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+
 
       {/* ── Plan cards ────────────────────────────────────────────────────── */}
       <div className="w-full grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -401,7 +384,7 @@ function PlanCards() {
               {loadingPlan === plan.id
                 ? (wakingUp ? "Waking server…" : "Please wait…")
                 : isNepal
-                ? `Pay with ${nepalGateway === "esewa" ? "eSewa" : "Khalti"}`
+                ? "Pay with Khalti"
                 : "Get started"}
             </span>
           </button>
@@ -426,7 +409,7 @@ function PlanCards() {
       <p className="text-xs text-center" style={{ color: "hsl(var(--muted-foreground))" }}>
         Cancel anytime.{" "}
         {isNepal
-          ? `Secure payment via ${nepalGateway === "esewa" ? "eSewa" : "Khalti"}.`
+          ? "Secure payment via Khalti."
           : "Secure payment via Dodo Payments."}
       </p>
     </motion.div>
