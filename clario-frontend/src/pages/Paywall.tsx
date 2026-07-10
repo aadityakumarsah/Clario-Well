@@ -473,6 +473,21 @@ export default function Paywall() {
           <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
         ) : showPlans ? (
           <>
+            {stillInTrial && (
+              <motion.button
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                onClick={() => navigate("/daily-check")}
+                className="px-8 py-3 rounded-xl text-base font-semibold transition-all duration-200 hover:opacity-90 hover:scale-105"
+                style={{
+                  background: "hsl(var(--primary))",
+                  color: "#fff",
+                  boxShadow: "0 4px 20px hsl(var(--primary) / 0.4)",
+                }}
+              >
+                Try for 3 days
+              </motion.button>
+            )}
             <PlanCards />
             <div className="flex flex-col items-center gap-3 mt-1">
               {stillInTrial && (
