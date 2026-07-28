@@ -246,6 +246,7 @@ function App() {
   const [sidebarHidden, setSidebarHidden] = useState(true);
   const [heroSoundEnabled, setHeroSoundEnabled] = useState(false);
   const [storeMenuOpen, setStoreMenuOpen] = useState(false);
+  const [heroMenuOpen, setHeroMenuOpen] = useState(false);
   const [appStoreComingSoon, setAppStoreComingSoon] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const heroVideoRef = useRef<HTMLVideoElement>(null);
@@ -394,6 +395,7 @@ function App() {
             <a href="#breathe" aria-label="Calibrated breathing exercises">Breathe</a>
             <a href="#relief" aria-label="Creative relief modules">Relief</a>
             <a href="#privacy" aria-label="Review our privacy principles and data control">Privacy</a>
+            <a href="https://clario-well.pages.dev/" target="_blank" rel="noreferrer" className="text-emerald-700 font-semibold" aria-label="Soon in Play Store">Soon in Play Store</a>
           </nav>
           <div className="landing-header-actions">
             <a className="landing-prebook-link" href="#premium" aria-label="Pre-book Clario Premium emotional companion plan" onClick={(event) => { event.preventDefault(); navigateToPremium(); }}><Sparkles className="size-3.5" /> Pre-book</a>
@@ -403,7 +405,8 @@ function App() {
               </button>
               <div className="landing-store-popover" role="menu" aria-label="Download Clario">
                 <button type="button" className="store-option" onClick={navigateToPremium} role="menuitem" aria-label="Pre-book Clario Premium"><Sparkles className="size-5" /><span>Pre-book Premium</span></button>
-                <a className="store-option" href={playStoreUrl} target="_blank" rel="noreferrer" role="menuitem" aria-label="Get Clario on Google Play"><PlayStoreMark /><span>Google Play</span></a>
+                <a className="store-option" href="https://clario-well.pages.dev/" target="_blank" rel="noreferrer" role="menuitem" aria-label="Open Web App"><Sparkles className="size-5" /><span>Open Web App</span></a>
+                <a className="store-option" href="https://clario-well.pages.dev/" target="_blank" rel="noreferrer" role="menuitem" aria-label="Soon in Play Store"><PlayStoreMark /><span>Soon in Play Store</span></a>
                 <button type="button" className="store-option" onClick={showAppStoreComingSoon} role="menuitem" aria-label="Get Clario on the App Store"><AppStoreMark /><span>App Store</span></button>
                 {appStoreComingSoon && <p className="landing-store-notice" role="status">App Store coming soon</p>}
               </div>
@@ -423,7 +426,19 @@ function App() {
             <h1>Make room for your <span>feelings.</span><span className="sr-only"> Emotion support with Clario</span></h1>
             <p>Personalized, private mental wellness built for the moments when you are running on empty. Guide your breathing, express yourself through interactive gestures, and reflect out loud with a secure voice companion.</p>
           </div>
-          <a className="landing-hero-cta" href="#daily-journey" aria-label="Begin your emotional journey with Clario"><Play className="size-4 fill-current animate-pulse" /> Begin journey</a>
+          <div className="relative mt-8 flex justify-center z-50">
+            <div className={`landing-store-menu ${heroMenuOpen ? "is-open" : ""}`}>
+              <button type="button" className="landing-hero-cta" onClick={() => setHeroMenuOpen((open) => !open)} aria-expanded={heroMenuOpen} aria-haspopup="menu">
+                <Play className="size-4 fill-current animate-pulse" /> Begin journey <ChevronDown className="size-4 ml-2 opacity-70" />
+              </button>
+              <div className="landing-store-popover" style={{ left: "50%", transform: "translateX(-50%)", top: "calc(100% + 12px)", right: "auto", position: "absolute" }} role="menu">
+                <a className="store-option" href="https://clario-well.pages.dev/" target="_blank" rel="noreferrer" role="menuitem"><Sparkles className="size-5" /><span>Open Web App</span></a>
+                <a className="store-option" href="https://clario-well.pages.dev/" target="_blank" rel="noreferrer" role="menuitem"><PlayStoreMark /><span>Soon in Play Store</span></a>
+                <button type="button" className="store-option" onClick={showAppStoreComingSoon} role="menuitem"><AppStoreMark /><span>App Store</span></button>
+                {appStoreComingSoon && <p className="landing-store-notice" role="status">App Store coming soon</p>}
+              </div>
+            </div>
+          </div>
         </div>
         <a className="landing-scroll-cue animate-bounce" href="#guide" aria-label="Scroll to the Clario guide"><ChevronDown /></a>
       </section>

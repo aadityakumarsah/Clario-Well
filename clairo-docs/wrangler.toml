@@ -1,4 +1,5 @@
 name = "docs-clario"
+pages_build_output_dir = "dist"
 
 [vars]
 VITE_BACKEND_BASE_URL = "https://echo-yg4t.onrender.com"
