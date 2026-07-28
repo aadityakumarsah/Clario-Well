@@ -1,0 +1,5 @@
+name = "docs-clario"
+
+[vars]
+VITE_BACKEND_BASE_URL = "https://echo-yg4t.onrender.com"
+VITE_VOKAI_API_URL = "https://echo-yg4t.onrender.com"
