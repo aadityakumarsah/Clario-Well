@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import Login from "@/pages/Login";
 import Dashboard from "@/pages/Dashboard";
@@ -23,7 +23,6 @@ export default function App() {
       <BrowserRouter>
         <Routes>
           <Route path="*" element={<Guard />} />
-          <Route path="/" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>
