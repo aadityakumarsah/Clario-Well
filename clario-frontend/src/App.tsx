@@ -30,10 +30,11 @@ import TrialBanner from "./components/TrialBanner.tsx";
 import Login from "./pages/Login.tsx";
 import Onboard from "./pages/Onboard.tsx";
 import Garden from "./pages/Garden.tsx";
+import Privacy from "./pages/Privacy.tsx";
 
 const queryClient = new QueryClient();
 
-const UNGUARDED_PATHS = ["/paywall", "/paywall/success", "/login", "/onboard"];
+const UNGUARDED_PATHS = ["/paywall", "/paywall/success", "/login", "/onboard", "/privacy", "/privacy-policy"];
 
 function AppRoutes() {
   const location = useLocation();
@@ -92,6 +93,8 @@ function AppRoutes() {
         <Route path="/paywall/success" element={<PaywallSuccess />} />
         <Route path="/login" element={<Login />} />
         <Route path="/onboard" element={<Onboard />} />
+        <Route path="/privacy" element={<Privacy />} />
+        <Route path="/privacy-policy" element={<Privacy />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </>
