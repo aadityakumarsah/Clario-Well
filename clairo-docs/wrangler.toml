@@ -1,6 +1,6 @@
+# Cloudflare Pages deployment config for the Clario docs site.
+# Build-time environment variables (VITE_BACKEND_BASE_URL, etc.) are set in the
+# Cloudflare dashboard (Pages > docs-clario > Settings > Environment variables)
+# so they get inlined into the bundle at build time.
 name = "docs-clario"
 pages_build_output_dir = "dist"
-
-[vars]
-VITE_BACKEND_BASE_URL = "https://echo-yg4t.onrender.com"
-VITE_VOKAI_API_URL = "https://echo-yg4t.onrender.com"

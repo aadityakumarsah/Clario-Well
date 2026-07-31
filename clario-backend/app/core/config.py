@@ -39,6 +39,7 @@ class Settings(BaseSettings):
     # Application settings
     DEBUG: bool = False
     SECRET_KEY: str = "change-me-in-production"
+    ENV: str = "development"
 
     model_config = {
         "env_file": PROJECT_ROOT / ".env",
@@ -49,3 +50,10 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+
+if settings.ENV == "production" and settings.SECRET_KEY in ("", "change-me-in-production"):
+    raise RuntimeError(
+        "SECRET_KEY is not set to a real value. Refusing to start in production "
+        "with the default JWT signing key (full token forgery risk). "
+        "Set SECRET_KEY in the environment."
+    )

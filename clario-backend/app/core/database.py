@@ -4,7 +4,18 @@ import sqlite3
 import threading
 from pathlib import Path
 
-DB_PATH = Path(os.getenv("DB_PATH", "/tmp/clario.db"))
+DEFAULT_DB_PATH = Path(os.getenv("DB_PATH", "/tmp/clario.db"))
+DB_PATH = DEFAULT_DB_PATH
+
+# Warn once at import time when running on an ephemeral path in production —
+# every restart wipes all voice sessions/transcripts stored there.
+if os.getenv("ENV", "development") == "production" and str(DB_PATH).startswith("/tmp/"):
+    import logging
+    logging.getLogger(__name__).warning(
+        "DB_PATH is the ephemeral default (%s). Voice sessions and transcripts "
+        "will be LOST on every restart. Set DB_PATH to a persistent location "
+        "or migrate storage to Supabase.", DB_PATH,
+    )
 
 _local = threading.local()
 
@@ -15,6 +26,9 @@ def get_conn() -> sqlite3.Connection:
         conn.row_factory = sqlite3.Row
         conn.execute("PRAGMA journal_mode=WAL")
         conn.execute("PRAGMA foreign_keys=ON")
+        # Avoid "database is locked" under concurrent gunicorn workers
+        conn.execute("PRAGMA busy_timeout=5000")
+        conn.execute("PRAGMA synchronous=NORMAL")
         _local.conn = conn
     return _local.conn
 

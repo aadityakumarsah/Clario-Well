@@ -1,4 +1,5 @@
 """Daily check-in endpoints — mark steps, query today's state, weekly history."""
+from datetime import date
 from typing import Literal
 
 from fastapi import APIRouter, Depends, Query
@@ -12,6 +13,14 @@ from app.services import daily_checks_service as svc
 daily_checks_router = APIRouter(prefix="/daily-checks", tags=["Daily Checks"])
 
 
+def _valid_date(value: str) -> date | None:
+    """Parse YYYY-MM-DD; returns None on malformed input."""
+    try:
+        return date.fromisoformat(value)
+    except ValueError:
+        return None
+
+
 class MarkStepBody(BaseModel):
     step: Literal["morning", "refill", "night"]
     check_date: str   # YYYY-MM-DD in the user's local timezone
@@ -23,6 +32,8 @@ def mark_step(body: MarkStepBody, user: dict = Depends(get_current_user)):
     user_id = user.get("id")
     if not user_id or user_id == "guest":
         return fail("Not authenticated")
+    if _valid_date(body.check_date) is None:
+        return fail("check_date must be a valid YYYY-MM-DD date")
     try:
         result = svc.mark_step(user_id, body.step, body.check_date)
         return ok("Step marked", result)
@@ -40,6 +51,8 @@ def get_today(
     user_id = user.get("id")
     if not user_id or user_id == "guest":
         return fail("Not authenticated")
+    if _valid_date(check_date) is None:
+        return fail("check_date must be a valid YYYY-MM-DD date")
     try:
         result = svc.get_today(user_id, check_date)
         return ok("OK", result)
@@ -58,6 +71,8 @@ def get_history(
     user_id = user.get("id")
     if not user_id or user_id == "guest":
         return fail("Not authenticated")
+    if _valid_date(end_date) is None:
+        return fail("end_date must be a valid YYYY-MM-DD date")
     try:
         result = svc.get_history(user_id, days, end_date)
         return ok("OK", result)

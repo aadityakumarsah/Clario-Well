@@ -22,6 +22,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import {
   getDailyChecksToday,
   getDailyChecksHistory,
+  markCheckStep,
   localDateString,
   type DailyCheckDay,
 } from "@/lib/api";
@@ -38,6 +39,10 @@ export function markStepDone(key: string) {
   const current = loadDone();
   current[key] = true;
   localStorage.setItem(todayKey(), JSON.stringify(current));
+  // Persist to the server too — this is what drives streaks/garden.
+  // Fire-and-forget: the local write is the optimistic UI; the server sync
+  // must never block the step page.
+  markCheckStep(key as "morning" | "refill" | "night").catch(() => {});
 }
 
 // ─── milestones ───────────────────────────────────────────────────────────────
@@ -129,7 +134,7 @@ export default function DailyCheck() {
         getDailyChecksToday(),
         getDailyChecksHistory(7),
       ]);
-      const merged = { morning: today.morning, refill: today.refill, night: today.night, ...loadDone() };
+      const merged = { ...loadDone(), morning: today.morning, refill: today.refill, night: today.night };
       setDone(merged);
       localStorage.setItem(todayKey(), JSON.stringify(merged));
       setStreak(today.current_streak);

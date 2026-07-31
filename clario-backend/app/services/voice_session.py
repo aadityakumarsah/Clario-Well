@@ -140,19 +140,26 @@ def delete_session(session_id: str, user_id: str) -> bool:
         return False
 
 
-def cleanup_sessions_older_than(days: int = 10) -> int:
-    """Delete all sessions (and their conversation history) created more than `days` ago.
+def cleanup_sessions_older_than(days: int = 10, user_id: str = "guest") -> int:
+    """Delete sessions (and their conversation history) created more than `days` ago.
 
-    Called once at startup so old data is pruned without needing a separate cron job.
+    By default only prunes the shared anonymous "guest" namespace so real users'
+    journals are never destroyed. Pass user_id=None to prune every user.
     Returns the number of sessions removed.
     """
     cutoff = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
     try:
         conn = get_conn()
-        old_rows = conn.execute(
-            "SELECT session_id FROM voice_sessions WHERE created_at < ?",
-            (cutoff,),
-        ).fetchall()
+        if user_id is None:
+            old_rows = conn.execute(
+                "SELECT session_id FROM voice_sessions WHERE created_at < ?",
+                (cutoff,),
+            ).fetchall()
+        else:
+            old_rows = conn.execute(
+                "SELECT session_id FROM voice_sessions WHERE user_id = ? AND created_at < ?",
+                (user_id, cutoff),
+            ).fetchall()
         if not old_rows:
             return 0
         ids = [r["session_id"] for r in old_rows]
@@ -165,8 +172,8 @@ def cleanup_sessions_older_than(days: int = 10) -> int:
         )
         conn.commit()
         logger.info(
-            "cleanup_sessions_older_than({}d): removed {} sessions (cutoff={})",
-            days, len(ids), cutoff,
+            "cleanup_sessions_older_than({}d): removed {} session(s) for user_id={} (cutoff={})",
+            days, len(ids), user_id, cutoff,
         )
         return len(ids)
     except Exception as e:

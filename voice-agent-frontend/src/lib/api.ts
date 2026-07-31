@@ -1,11 +1,16 @@
 import { supabase } from "./supabase";
 
-const BASE = (import.meta.env.VITE_BACKEND_BASE_URL as string) ?? "";
+const BASE = ((import.meta.env.VITE_BACKEND_BASE_URL as string) ?? "").replace(/\/+$/, "");
 
 async function headers(): Promise<Record<string, string>> {
   const h: Record<string, string> = { "Content-Type": "application/json" };
-  const { data: { session } } = await supabase.auth.getSession();
-  if (session?.access_token) h["Authorization"] = `Bearer ${session.access_token}`;
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.access_token) h["Authorization"] = `Bearer ${session.access_token}`;
+  } catch {
+    // Auth token unavailable (Supabase outage) — proceed unauthenticated;
+    // the backend will reject protected calls with a clear error.
+  }
   return h;
 }
 
@@ -84,22 +89,17 @@ export async function listSessions(params?: {
   date?: string;
   tzOffsetMinutes?: number;
 }): Promise<SessionDetailData[]> {
-  if (!BASE) return [];
-  try {
-    const search = new URLSearchParams();
-    if (params?.date) search.set("date", params.date);
-    if (typeof params?.tzOffsetMinutes === "number") {
-      search.set("tz_offset_minutes", String(params.tzOffsetMinutes));
-    }
-    const qs = search.toString();
-    const res = await fetch(`${BASE}/sessions${qs ? `?${qs}` : ""}`, { headers: await headers() });
-    const json = await safeJson(res);
-    if (!json.success) throw new Error((json.message as string) ?? "Failed to load sessions");
-    return json.data as unknown as SessionDetailData[];
-  } catch (e) {
-    console.warn("listSessions:", e);
-    return [];
+  if (!BASE) throw new Error("Backend URL not configured (VITE_BACKEND_BASE_URL missing)");
+  const search = new URLSearchParams();
+  if (params?.date) search.set("date", params.date);
+  if (typeof params?.tzOffsetMinutes === "number") {
+    search.set("tz_offset_minutes", String(params.tzOffsetMinutes));
   }
+  const qs = search.toString();
+  const res = await fetch(`${BASE}/sessions${qs ? `?${qs}` : ""}`, { headers: await headers() });
+  const json = await safeJson(res);
+  if (!json.success) throw new Error((json.message as string) ?? "Failed to load sessions");
+  return json.data as unknown as SessionDetailData[];
 }
 
 export async function generateSessionReport(sessionId: string): Promise<SessionDetailData> {

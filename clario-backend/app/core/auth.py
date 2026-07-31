@@ -3,6 +3,7 @@ import binascii
 import hashlib
 import hmac
 import os
+import sqlite3
 import uuid
 from datetime import datetime, timedelta, timezone
 
@@ -70,8 +71,14 @@ def create_user(email: str, password: str) -> dict | None:
         )
         conn.commit()
         return {"id": user_id, "email": email.lower().strip(), "created_at": created_at}
-    except Exception:
+    except sqlite3.IntegrityError:
+        # UNIQUE constraint violation → email already registered
         return None
+    except Exception:
+        # Any other failure is a real server error — do not mask it as "already exists"
+        import logging
+        logging.getLogger(__name__).exception("create_user failed for email=%s", email)
+        raise
 
 
 def authenticate_user(email: str, password: str) -> dict | None:

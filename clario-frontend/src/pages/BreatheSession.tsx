@@ -202,7 +202,8 @@ export default function BreatheSession() {
   };
 
   const fetchVoiceGuide = async () => {
-    const BASE = (import.meta.env.VITE_BACKEND_BASE_URL as string) ?? "http://localhost:8000";
+    const BASE = ((import.meta.env.VITE_BACKEND_BASE_URL as string) ?? "").replace(/\/+$/, "");
+    if (!BASE) return; // Backend not configured — voice guide simply stays off
     const phrases = [...new Set(pattern.phases.map((p) => GUIDE_PHRASES[p.name]))];
     await Promise.all(
       phrases.map(async (text) => {

@@ -9,9 +9,8 @@ import hashlib
 import time
 import httpx
 
-from fastapi import APIRouter, Depends, Form, HTTPException, UploadFile, File, status
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, status
 from pydantic import BaseModel
-from typing import Optional
 
 from app.core.auth import get_current_user
 from app.core.config import settings
@@ -58,7 +57,6 @@ class AvatarUploadResponse(BaseModel):
 @avatar_router.post("/upload", response_model=AvatarUploadResponse)
 async def upload_avatar(
     file: UploadFile = File(...),
-    old_public_id: Optional[str] = Form(None),
     current_user: dict = Depends(get_current_user),
 ):
     if not settings.CLOUDINARY_CLOUD_NAME or not settings.CLOUDINARY_API_SECRET:
@@ -66,6 +64,15 @@ async def upload_avatar(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="Cloudinary is not configured on this server.",
         )
+
+    # Reject oversized uploads by Content-Length before buffering the body.
+    if file.size and file.size > 10 * 1024 * 1024:
+        raise HTTPException(status_code=413, detail="Image must be under 10 MB.")
+
+    # Only accept real image uploads (no arbitrary file hosting).
+    allowed_types = {"image/jpeg", "image/png", "image/webp", "image/gif"}
+    if file.content_type not in allowed_types:
+        raise HTTPException(status_code=415, detail="Only JPEG, PNG, WEBP or GIF images are allowed.")
 
     image_bytes = await file.read()
     if len(image_bytes) > 10 * 1024 * 1024:
@@ -88,15 +95,15 @@ async def upload_avatar(
         if upload_resp.status_code != 200:
             raise HTTPException(status_code=502, detail=f"Cloudinary upload failed: {upload_resp.text[:300]}")
 
-        # 2. Delete old image if a previous public_id was supplied and differs
-        prev = old_public_id.strip() if old_public_id else None
-        if prev and prev != public_id:
-            del_ts = int(time.time())
-            await client.post(
-                f"{base_url}/destroy",
-                data=_delete_params(prev, del_ts),
-            )
-            # Ignore delete errors — upload already succeeded
+        # 2. Delete the caller's previous avatar (public_id is derived from the
+        #    authenticated user, never trusted from the client). Best-effort:
+        #    errors are ignored — the upload already succeeded.
+        prev = f"user_{user_id}"
+        del_ts = int(time.time())
+        await client.post(
+            f"{base_url}/destroy",
+            data=_delete_params(prev, del_ts),
+        )
 
     data = upload_resp.json()
     return AvatarUploadResponse(

@@ -151,7 +151,14 @@ def create_checkout_session(
 async def dodo_webhook(request: Request):
     """Dodo Payments sends events here — NOT protected by JWT."""
     webhook_secret = os.getenv("DODO_WEBHOOK_SECRET", "")
+    is_prod = os.getenv("ENV", "development") == "production"
     payload_bytes  = await request.body()
+
+    if not webhook_secret:
+        if is_prod:
+            logger.error("DODO_WEBHOOK_SECRET not set — rejecting webhook (fail closed in production)")
+            raise HTTPException(status_code=500, detail="Webhook secret not configured on server")
+        logger.warning("DODO_WEBHOOK_SECRET not set — accepting webhook without verification (dev only)")
 
     if webhook_secret:
         wh_id        = request.headers.get("webhook-id", "")
@@ -162,11 +169,18 @@ async def dodo_webhook(request: Request):
             logger.warning("Dodo webhook missing signature headers")
             raise HTTPException(status_code=400, detail="Missing webhook signature headers")
 
+        # Reject stale replays (allow 5 minutes of clock skew)
+        try:
+            ts = int(wh_timestamp)
+            if abs(time.time() - ts) > 300:
+                logger.warning("Dodo webhook timestamp too old: {}", wh_timestamp)
+                raise HTTPException(status_code=400, detail="Webhook timestamp out of range")
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid webhook timestamp")
+
         if not _verify_dodo_signature(wh_id, wh_timestamp, payload_bytes, wh_signature, webhook_secret):
             logger.warning("Dodo webhook signature verification failed")
             raise HTTPException(status_code=400, detail="Invalid webhook signature")
-    else:
-        logger.warning("DODO_WEBHOOK_SECRET not set — accepting webhook without verification (dev only)")
 
     try:
         event = json.loads(payload_bytes)
@@ -372,23 +386,11 @@ def sync_subscription(
     if existing and existing.get("status") == "active":
         return {"synced": True}
 
-    # If the sub_id looks like a real Dodo subscription, activate directly.
-    # Dodo only redirects to success_url with a real sub_id when payment succeeds,
-    # so this is safe proof of payment. Webhook will update plan/period later.
-    if not dodo_api_ok and dodo_id.startswith("sub_"):
-        now = int(time.time())
-        upsert_subscription(
-            user_id=user_id,
-            stripe_subscription_id=dodo_id,
-            plan=None,        # unknown until webhook fires
-            status="active",
-            current_period_end=None,  # no expiry until webhook updates it
-            started_at=now,
-        )
-        logger.info("Activated subscription directly for user {} dodo_id={} (Dodo API unavailable)", user_id, dodo_id)
-        return {"synced": True}
-
-    raise HTTPException(status_code=503, detail="Subscription not yet activated — payment may still be processing")
+    # Do NOT activate from a client-supplied sub ID when the Dodo API is
+    # unreachable — that would let anyone claim "sub_anything" and get a free,
+    # never-expiring subscription. Only a server-verified Dodo lookup (above)
+    # or a signed webhook may activate. Tell the client to retry instead.
+    raise HTTPException(status_code=503, detail="Subscription not yet activated — please retry in a moment")
 
 
 @payments_router.get("/status", response_model=SubscriptionStatusResponse)

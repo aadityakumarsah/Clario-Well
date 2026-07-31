@@ -4,9 +4,10 @@ const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn(
-    "[Clario] VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY is not set. Auth will not work."
+  throw new Error(
+    "[Clario] VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY must be set. " +
+    "Check the build environment (see .env.example)."
   );
 }
 
-export const supabase = createClient(supabaseUrl ?? "", supabaseAnonKey ?? "");
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);

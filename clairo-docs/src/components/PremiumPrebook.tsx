@@ -3,6 +3,8 @@ import { ArrowRight, Check, Crown, LoaderCircle, ShieldCheck } from "lucide-reac
 
 type PlanId = "weekly" | "monthly" | "yearly";
 
+const API_BASE = ((import.meta.env.VITE_BACKEND_BASE_URL as string) ?? "").replace(/\/+$/, "");
+
 const plans: Array<{ id: PlanId; label: string; price: string; period: string; detail: string; featured?: boolean }> = [
   { id: "weekly", label: "Weekly Support", price: "$2", period: "/ week", detail: "A flexible way to support our independent mission." },
   { id: "monthly", label: "Monthly Premium", price: "$7", period: "/ month", detail: "Unlock advanced emotional insights.", featured: true },
@@ -19,7 +21,7 @@ export function PremiumPrebook() {
 
   useEffect(() => {
     // Warm up the payment server in the background on page load
-    fetch("https://echo-yg4t.onrender.com/health").catch(() => {});
+    if (API_BASE) fetch(`${API_BASE}/health`).catch(() => {});
   }, []);
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
@@ -28,13 +30,19 @@ export function PremiumPrebook() {
     setMessage("");
     setShowWakingUpNotice(false);
 
+    if (!API_BASE) {
+      setMessage("Checkout is temporarily unavailable — the payment server is not configured. Please try again later.");
+      setSubmitting(false);
+      return;
+    }
+
     // If the request takes longer than 1.5 seconds, show a spin-up notice
     const noticeTimeout = setTimeout(() => {
       setShowWakingUpNotice(true);
     }, 1500);
 
     try {
-      const response = await fetch("https://echo-yg4t.onrender.com/vokai/premium/prebook", {
+      const response = await fetch(`${API_BASE}/vokai/premium/prebook`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ plan, name, email }),

@@ -4,3 +4,21 @@ __pycache__/
 node_modules/
 dist/
 build/
+
+# Local SQLite databases (may contain user data — never commit)
+*.db
+*.db-shm
+*.db-wal
+*.db-journal
+
+# macOS
+.DS_Store
+
+# Cloudflare
+.wrangler/
+
+# TypeScript
+*.tsbuildinfo
+
+# Scratch Rust crate (untracked sandbox — add with `git add -f` if intended)
+rust/

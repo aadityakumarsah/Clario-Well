@@ -10,7 +10,9 @@ bun install
 bun run dev
 ```
 
-Open the local URL printed by Vite, normally `http://localhost:8080` (or the fallback `http://localhost:5173`).
+Open the local URL printed by Vite, normally `http://localhost:5173`.
+
+The docs site deploys to **Cloudflare Pages** (`docs-clario.pages.dev`) via `wrangler`; set build-time env vars (e.g. `VITE_BACKEND_BASE_URL`) in the Cloudflare dashboard.
 
 ## Build for production
 

@@ -9,9 +9,9 @@ const SUPABASE_URL      = import.meta.env.VITE_SUPABASE_URL as string;
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
 
 if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-  console.error(
+  throw new Error(
     "[Clario] Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY — " +
-    "copy them from Supabase > Settings > API into your .env.local"
+    "copy them from Supabase > Settings > API into your .env (see .env.example)."
   );
 }
 

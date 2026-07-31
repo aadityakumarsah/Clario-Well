@@ -236,31 +236,6 @@ export function localDateString(): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
-// Circuit breaker: once a daily-checks endpoint returns a server error (5xx),
-// skip all further network calls for the rest of the session and use local state.
-let _dailyChecksUnavailable = false;
-
-function _dailyFallbackToday(): DailyChecksState {
-  return {
-    check_date: localDateString(),
-    morning: false, refill: false, night: false,
-    day_complete: false, completed_at: null,
-    current_streak: 0, longest_streak: 0, last_check_date: null,
-  };
-}
-
-function _dailyFallbackHistory(days: number): DailyCheckDay[] {
-  const today = new Date();
-  return Array.from({ length: days }, (_, i) => {
-    const d = new Date(today);
-    d.setDate(today.getDate() - (days - 1 - i));
-    return {
-      check_date: `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`,
-      morning: false, refill: false, night: false, day_complete: false,
-    };
-  });
-}
-
 export async function markCheckStep(step: DailyStep): Promise<DailyChecksState> {
   if (!BASE) throw new Error("Backend URL not configured");
   const res = await fetch(`${BASE}/daily-checks/mark`, {
@@ -268,32 +243,29 @@ export async function markCheckStep(step: DailyStep): Promise<DailyChecksState> 
     headers: await headers(),
     body: JSON.stringify({ step, check_date: localDateString() }),
   });
-  if (res.status >= 500) { _dailyChecksUnavailable = true; return _dailyFallbackToday(); }
   const json = await safeJson(res);
   if (!json.success) throw new Error(json.message ?? "Failed to mark step");
   return json.data as DailyChecksState;
 }
 
 export async function getDailyChecksToday(): Promise<DailyChecksState> {
-  if (!BASE || _dailyChecksUnavailable) return _dailyFallbackToday();
+  if (!BASE) throw new Error("Backend URL not configured");
   const today = localDateString();
   const res = await fetch(`${BASE}/daily-checks/today?check_date=${encodeURIComponent(today)}`, {
     headers: await headers(),
   });
-  if (res.status >= 500) { _dailyChecksUnavailable = true; return _dailyFallbackToday(); }
   const json = await safeJson(res);
   if (!json.success) throw new Error(json.message ?? "Failed to load daily checks");
   return json.data as DailyChecksState;
 }
 
 export async function getDailyChecksHistory(days = 7): Promise<DailyCheckDay[]> {
-  if (!BASE || _dailyChecksUnavailable) return _dailyFallbackHistory(days);
+  if (!BASE) throw new Error("Backend URL not configured");
   const today = localDateString();
   const res = await fetch(
     `${BASE}/daily-checks/history?days=${days}&end_date=${encodeURIComponent(today)}`,
     { headers: await headers() },
   );
-  if (res.status >= 500) { _dailyChecksUnavailable = true; return _dailyFallbackHistory(days); }
   const json = await safeJson(res);
   if (!json.success) throw new Error(json.message ?? "Failed to load history");
   return json.data as DailyCheckDay[];

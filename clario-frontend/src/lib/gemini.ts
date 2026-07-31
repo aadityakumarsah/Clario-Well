@@ -2,6 +2,8 @@ export class MediaHandler {
   audioContext: AudioContext | null = null;
   mediaStream: MediaStream | null = null;
   audioWorkletNode: AudioWorkletNode | null = null;
+  mediaStreamSource: MediaStreamAudioSourceNode | null = null;
+  muteGainNode: GainNode | null = null;
   nextStartTime: number = 0;
   scheduledSources: AudioBufferSourceNode[] = [];
   isRecording: boolean = false;
@@ -11,14 +13,18 @@ export class MediaHandler {
     if (!this.audioContext) {
       this.audioContext = new (window.AudioContext ||
         (window as any).webkitAudioContext)();
-      await this.audioContext.audioWorklet.addModule("/pcm-processor.js");
+      const base = (import.meta.env.BASE_URL || "/").replace(/\/$/, "");
+      await this.audioContext.audioWorklet.addModule(`${base}/pcm-processor.js`);
     }
     if (this.audioContext.state === "suspended") {
-      await this.audioContext.resume();
+      try { await this.audioContext.resume(); } catch (e) {}
     }
   }
 
   async startAudio(onAudioData: (data: ArrayBuffer) => void) {
+    if (this.isRecording) return;
+    // Never leak a previously captured stream: stop old tracks before re-requesting.
+    this.stopAudio();
     await this.initializeAudio();
 
     try {
@@ -26,6 +32,7 @@ export class MediaHandler {
         audio: true,
       });
       const source = this.audioContext!.createMediaStreamSource(this.mediaStream);
+      this.mediaStreamSource = source;
       this.audioWorkletNode = new AudioWorkletNode(
         this.audioContext!,
         "pcm-processor"
@@ -47,6 +54,7 @@ export class MediaHandler {
       // Mute local feedback
       const muteGain = this.audioContext!.createGain();
       muteGain.gain.value = 0;
+      this.muteGainNode = muteGain;
       this.audioWorkletNode.connect(muteGain);
       muteGain.connect(this.audioContext!.destination);
 
@@ -59,13 +67,30 @@ export class MediaHandler {
 
   stopAudio() {
     this.isRecording = false;
+    if (this.audioWorkletNode) {
+      this.audioWorkletNode.disconnect();
+      this.audioWorkletNode = null;
+    }
+    if (this.muteGainNode) {
+      try { this.muteGainNode.disconnect(); } catch (e) {}
+      this.muteGainNode = null;
+    }
+    if (this.mediaStreamSource) {
+      try { this.mediaStreamSource.disconnect(); } catch (e) {}
+      this.mediaStreamSource = null;
+    }
     if (this.mediaStream) {
       this.mediaStream.getTracks().forEach((t) => t.stop());
       this.mediaStream = null;
     }
-    if (this.audioWorkletNode) {
-      this.audioWorkletNode.disconnect();
-      this.audioWorkletNode = null;
+  }
+
+  dispose() {
+    this.stopAudio();
+    this.stopAudioPlayback();
+    if (this.audioContext) {
+      try { void this.audioContext.close(); } catch (e) {}
+      this.audioContext = null;
     }
   }
 
@@ -75,8 +100,10 @@ export class MediaHandler {
 
   playAudio(arrayBuffer: ArrayBuffer) {
     if (!this.audioContext) return;
+    // PCM frames must be an even number of bytes (16-bit samples).
+    if (!arrayBuffer || arrayBuffer.byteLength < 2 || arrayBuffer.byteLength % 2 !== 0) return;
     if (this.audioContext.state === "suspended") {
-      this.audioContext.resume();
+      try { void this.audioContext.resume(); } catch (e) {}
     }
 
     const pcmData = new Int16Array(arrayBuffer);
@@ -173,7 +200,11 @@ export class GeminiClient {
   }
 
   connect(token?: string, voice?: string, persona?: string, lang?: string, userName?: string) {
-    let wsUrl = `${import.meta.env.VITE_BACKEND_BASE_URL}/websocket/gemini/live`;
+    const base = (import.meta.env.VITE_BACKEND_BASE_URL as string) ?? "";
+    if (!base) {
+      throw new Error("Backend URL not configured (VITE_BACKEND_BASE_URL missing).");
+    }
+    let wsUrl = `${base.replace(/\/+$/, "")}/websocket/gemini/live`;
     wsUrl = wsUrl.replace("https://", "wss://").replace("http://", "ws://");
     
     const params = new URLSearchParams();
@@ -188,7 +219,8 @@ export class GeminiClient {
       wsUrl += `?${queryString}`;
     }
 
-    console.log("wsUrl", wsUrl);
+    // Never leave a stale socket + handlers around when reconnecting.
+    this.disconnect();
 
     this.websocket = new WebSocket(wsUrl);
     this.websocket.binaryType = "arraybuffer";

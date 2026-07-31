@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   backend:
     build:
@@ -10,13 +8,17 @@ services:
     environment:
       ENV: production
       ALLOWED_ORIGINS: "http://localhost:3000,http://frontend:3000"
+      # SQLite lives in a named volume so sessions/settings survive restarts
+      DB_PATH: /app/data/clario.db
     env_file:
       - ./clario-backend/.env
     restart: unless-stopped
     networks:
       - clario-network
+    volumes:
+      - clario-data:/app/data
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000')"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -28,8 +30,10 @@ services:
       dockerfile: Dockerfile
     ports:
       - "3000:3000"
-    environment:
-      VITE_BACKEND_BASE_URL: "http://backend:8000"
+    # NOTE: VITE_* vars are inlined at BUILD time by Vite; they are ignored at
+    # runtime. Set VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY /
+    # VITE_BACKEND_BASE_URL in clario-frontend/.env (or the CI build env) and
+    # rebuild the image with `docker compose build --no-cache frontend`.
     env_file:
       - ./clario-frontend/.env
     depends_on:
@@ -48,3 +52,6 @@ services:
 networks:
   clario-network:
     driver: bridge
+
+volumes:
+  clario-data:

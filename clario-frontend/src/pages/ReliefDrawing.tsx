@@ -124,10 +124,18 @@ function ReliefDrawingInner() {
 
       const dataUrl = flat.toDataURL("image/png");
 
-      const BASE = (import.meta.env.VITE_BACKEND_BASE_URL as string) ?? "http://localhost:8000";
+      const BASE = ((import.meta.env.VITE_BACKEND_BASE_URL as string) ?? "").replace(/\/+$/, "");
+      if (!BASE) throw new Error("Backend URL not configured (VITE_BACKEND_BASE_URL missing)");
+      const { supabase } = await import("@/lib/supabase");
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       const res = await fetch(`${BASE}/relief/analyze`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+        },
         body: JSON.stringify({ image: dataUrl }),
       });
 
@@ -222,7 +230,7 @@ function ReliefDrawingInner() {
       width: 1280, height: 720,
     });
     cameraRef.current = camera;
-    camera.start().then(() => setCameraReady(true));
+    camera.start().then(() => setCameraReady(true)).catch(() => setAnalyzeError("Camera permission denied — allow camera access to draw."));
 
     return () => {
       stopped = true;

@@ -73,6 +73,7 @@ function ReliefBlocksInner() {
   const blockCntRef = useRef(0);
 
   const [cameraReady, setCameraReady] = useState(false);
+  const [cameraError, setCameraError] = useState(false);
   const [gesture,     setGesture]     = useState<"idle" | "point" | "pinch" | "palm">("idle");
   const [selType,     setSelType]     = useState(0);
   const [blockCount,  setBlockCount]  = useState(0);
@@ -368,7 +369,7 @@ function ReliefBlocksInner() {
       },
       width: 1280, height: 720,
     });
-    camera.start().then(() => setCameraReady(true));
+    camera.start().then(() => setCameraReady(true)).catch(() => setCameraError(true));
 
     return () => {
       stopped = true;
@@ -405,7 +406,7 @@ function ReliefBlocksInner() {
       />
 
       {/* Camera loading */}
-      {!cameraReady && (
+      {!cameraReady && !cameraError && (
         <div className="absolute inset-0 flex flex-col items-center justify-center z-50">
           <div
             className="w-8 h-8 rounded-full border-2 animate-spin mb-3"
@@ -414,6 +415,24 @@ function ReliefBlocksInner() {
           <p className="text-sm" style={{ color: "rgba(58,46,42,0.50)" }}>
             Starting camera…
           </p>
+        </div>
+      )}
+
+      {cameraError && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center z-50 px-6 text-center">
+          <p className="text-base font-semibold mb-2" style={{ color: "#C0392B" }}>
+            Camera unavailable
+          </p>
+          <p className="text-sm" style={{ color: "rgba(58,46,42,0.60)" }}>
+            Allow camera access in your browser, then reload this page to start.
+          </p>
+          <button
+            onClick={() => navigate("/relief")}
+            className="mt-4 px-4 py-2 rounded-full text-sm font-semibold text-white"
+            style={{ background: "#69C362" }}
+          >
+            Go back
+          </button>
         </div>
       )}
 
