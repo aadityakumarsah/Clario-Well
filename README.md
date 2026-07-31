@@ -1,28 +1,28 @@
-# Clario — Your Daily Emotional Companion
+# Clario  Your Daily Emotional Companion
 
-> *Because some days you just need something that actually gets it.*
 
-Clario is a full-stack mental wellness web app built for the moments when you're running on empty — the 2 AM anxiety spiral, the midday fog that won't lift, the feeling you can't quite name. It doesn't judge. It doesn't give generic advice. It listens, guides, and meets you where you are.
+> *Because some days you just need something that actually gets it.
+> *Docs: https://docs-clario.pages.dev/
+> 
+Clario is a full-stack mental wellness web app built for the moments when you're running on empty — the 2 AM anxiety spiral, the midday fog that won't  ift, the feeling you can't quite name. It doesn't judge. It doesn't give generic dvice. It listens, guides, and meets you where you are.
 
 ---
 
 ## What It Does
 
-Clario weaves together AI conversation, biofeedback, and creative expression into a single daily ritual. Three check-ins. A breathing session tuned to your exact emotion. A garden that grows as you show up for yourself.
-
----
+Clario     weaves together AI conversation, biofeedback, and creative expression into a sigle daily ritual. Three check-ins. A breathing session tuned to your exact emotion. A garden that grows as you show up for yourself.
 
 ## Features
-
+    
 ### Daily Check — The Backbone of the Ritual
 
 Three gentle anchors throughout your day, each one a different kind of care:
 
-**Morning Energy** — Start with hydration and presence. Clario reminds you to drink water, not because it's on a checklist, but because it's the smallest act of kindness you can do for yourself before the day begins.
+**Morning Energy** — Start with hydration and presence. Clario reminds yo to drink water, not because it's on a checklist, but because it's the smallest act of kindness you can do for yourelf before the day begins.
 
-**Day Refill** — A midday movement moment. Five squats tracked by your camera. The goal isn't fitness. It's the 40-second interruption that reminds you that you have a body, and it needs you.
+**Day Refill** — A midday movement moment. Five squats tracked by your camera. The goal isn't fitness. It's the 40-second interruption that reminds you that you have a body, and it needs you
 
-**Night Summary** — A voice agent that listens to your whole day. No prompts. No structure. Just you talking, and an AI that reflects back what it heard — patterns, wins, the weight you're carrying. Powered by Gemini.
+**Night Summary** — A voice aent that listens to your whole day. No prompts. No structure. Just you talking, and an AI that reflects back what it heard — patterns, wins, the weight you're carrying. Powered by Gemini.
 
 Completion is remembered across the day. The garden on your home screen blooms a little more each time you check in.
 
@@ -69,7 +69,7 @@ See your check-in history, mood patterns, and journal entries across days. The d
 
 ---
 
-### Journal — Write the Things You Can't Say Out Loud
+### Journal — Write te Things You Can't Say Out Loud
 
 A private, searchable journal. Dark mode by default, because most journal entries happen at night.
 
@@ -77,7 +77,7 @@ A private, searchable journal. Dark mode by default, because most journal entrie
 
 ### Mood Menu (Mobile)
 
-The mobile tab bar is intentionally minimal — five tabs: Check, Dashboard, Mood, Journal, Settings. Tapping **Mood** slides up a bottom sheet where you choose between Breathe, Relief, and Meditation. No clutter. No decision fatigue.
+The mobile tab bar is ntionally minimal — five tabs: Check, Dashboard, Mood, Journal, Settings. Tapping **Mood** slides up a bottom sheet where you choose between Breathe, Relief, and Meditation. No clutter. No decision fatigue.
 
 ---
 
@@ -93,7 +93,7 @@ The mobile tab bar is intentionally minimal — five tabs: Check, Dashboard, Moo
 | Auth | PyJWT |
 | Deployment | Frontend → Vercel, Backend → Render |
 | PWA | Web app manifest + service worker — installable on iOS and Android |
-
+a
 ---
 
 ## Running Locally
@@ -101,7 +101,7 @@ The mobile tab bar is intentionally minimal — five tabs: Check, Dashboard, Moo
 **Backend**
 ```bash
 cd clario-backend
-pip install -r requirements.txt
+pip install -r requiraements.txt
 GEMINI_API_KEY=your_key JWT_SECRET=your_secret uvicorn main:app --reload
 ```
 
@@ -109,7 +109,7 @@ GEMINI_API_KEY=your_key JWT_SECRET=your_secret uvicorn main:app --reload
 ```bash
 cd clario-frontend
 npm install
-VITE_BACKEND_BASE_URL=http://localhost:8000 npm run dev
+VITE_BACKEND_BASE_URL=http://localahost:8000 npm run dev
 ```
 
 **Required environment variables**
@@ -117,38 +117,24 @@ VITE_BACKEND_BASE_URL=http://localhost:8000 npm run dev
 # Backend
 GEMINI_API_KEY=
 JWT_SECRET=
-
-# Frontend  
-VITE_BACKEND_BASE_URL=
 ```
 
 ---
 
-## Installing as an App
+## Installing as an 
 
-Clario is a Progressive Web App. On Android: open in Chrome → three-dot menu → *Add to Home Screen*. On iOS: open in Safari → Share → *Add to Home Screen*. It runs fullscreen, no browser chrome, exactly like a native app.
+Clario is a Progressive Web App. On roid: open in Chrome → three-dot menu → *Add to Home Screen*. On iOS: open in Safari → Share → *Add to Home Screen*. It runs fullscreen, no browser chrome, exactly like a native app
 
+df
 ---
 
-## Screenshots
-
-| Home — Light | Dashboard — Dark | Journal Entry |
-|---|---|---|
-| ![Home](project_screenshots/Home%20Page%20-%20Light.png) | ![Dashboard](project_screenshots/Dashboard%20-%20Dark.png) | ![Journal](project_screenshots/Journal%20Entry%20-%20Dark.png) |
-
-| Voice Call | Report | About |
-|---|---|---|
-| ![Call](project_screenshots/Call%20-%20Light.png) | ![Report](project_screenshots/Report%20-%20Light.png) | ![About](project_screenshots/About%20Page%20-%20Dark.png) |
-
----
-
-## The Philosophy
-
+## The Philosoph.  
+aaa
 Most wellness apps are built around streaks, gamification, and engagement metrics. Clario is built around the opposite: the minimum effective dose of presence. Three check-ins. One breath session. Five minutes of air drawing if you need it. You close the app and go live your life.
 
-The garden on the home screen doesn't wilt if you miss a day. It just waits.
+The garden aan the home screen doesn't wilt if you miss a day. It just waits.
 
----
+---ad
 
 ## License
 
@@ -156,4 +142,4 @@ MIT — use it, build on it, make it your own.
 
 ---
 
-*Built with care. For the hard days.*
+*Built with care. For the hard day
