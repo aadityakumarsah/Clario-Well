@@ -18,7 +18,7 @@ const resources = {
         hero_h1_1: "Clarity through",
         hero_h1_2: "reflection",
         hero_desc:
-          "Speak your thoughts. Clario listens, understands, and reveals the patterns beneath — helping you build emotional awareness, one day at a time.",
+          "Clario is a no-contact AI journaling app. Speak your thoughts freely — Clario listens, understands, and reveals the patterns beneath, helping you build emotional awareness one day at a time.",
         cta: "Start Your Daily Reflection",
         how_badge: "How it works",
         how_title_1: "A gentler way to",
@@ -151,7 +151,7 @@ const resources = {
         hero_h1_1: "प्रतिबिम्बद्वारा",
         hero_h1_2: "स्पष्टता",
         hero_desc:
-          "आफ्ना विचारहरू बोल्नुस्। Clario सुन्छ, बुझ्छ, र ढाँचाहरू प्रकट गर्छ — जसले तपाईंलाई भावनात्मक जागरूकता बनाउन मद्दत गर्छ।",
+          "Clario नो-कन्ट्याक्ट AI जर्नलिङ एप हो। आफ्ना विचारहरू स्वतन्त्र रूपमा बोल्नुस् — Clario सुन्छ, बुझ्छ, र ढाँचाहरू प्रकट गर्छ, जसले तपाईंलाई भावनात्मक जागरूकता बनाउन मद्दत गर्छ।",
         cta: "आफ्नो दैनिक प्रतिबिम्ब सुरु गर्नुस्",
         how_badge: "कसरी काम गर्छ",
         how_title_1: "आफूलाई",
